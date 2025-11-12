@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { View, Pressable, Text, StyleSheet, LayoutAnimation } from 'react-native';
 import { Feather, Octicons } from '@expo/vector-icons';
-import { opacity } from 'react-native-reanimated/lib/typescript/Colors';
 
 
 type PageName = "tours" | "mapa" | "menu";
