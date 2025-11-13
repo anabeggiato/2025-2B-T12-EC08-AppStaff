@@ -12,7 +12,7 @@ export function Header() {
 const styles = StyleSheet.create({
     header: {
         position: "absolute",
-        top: 20,
+        top: 40,
         left: 143,
     }
 })
