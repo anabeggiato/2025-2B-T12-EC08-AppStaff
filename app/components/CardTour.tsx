@@ -92,7 +92,7 @@ const styles = StyleSheet.create({
     card_container: {
         borderRadius: 20,
         padding: 16,
-        backgroundColor: "#FFF",
+        backgroundColor: "rgba(255, 255, 255, 0.95)",
         width: "90%",
         gap: 16
     },

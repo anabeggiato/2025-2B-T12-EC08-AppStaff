@@ -2,6 +2,7 @@ import { View, StyleSheet, Platform, UIManager, ScrollView } from "react-native"
 import { Navbar } from "@/components/navbar";
 import { Header } from "@/components/header";
 import CardTour from "@/components/CardTour";
+import DateSelector from "@/components/DateSelector";
 
 if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -129,6 +130,7 @@ export default function HomeScreen() {
   return (
     <View style={styles.container}>
       <Header />
+      <DateSelector />
       <ScrollView
         style={styles.cards}
         contentContainerStyle={{
@@ -168,7 +170,7 @@ const styles = StyleSheet.create({
   cards: {
     width: "100%",
     flexGrow: 1,
-    maxHeight: "80%"
+    maxHeight: "65%"
   },
 
 });
