@@ -44,7 +44,7 @@ const styles = StyleSheet.create({
     navbar: {
         flexDirection: "row",
         justifyContent: "space-between",
-        backgroundColor: "rgba(92, 61, 169, 0.3)",
+        backgroundColor: "rgba(92, 61, 169, 0.6)",
         borderRadius: 50,
         width: "95%",
         position: "absolute",

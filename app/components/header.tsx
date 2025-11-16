@@ -13,6 +13,6 @@ const styles = StyleSheet.create({
     header: {
         position: "absolute",
         top: 40,
-        left: 143,
+        left: 133,
     }
 })

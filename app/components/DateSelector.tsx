@@ -56,14 +56,14 @@ export default function DateCarousel() {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: "#1b1628",
-    paddingVertical: 40,
+    backgroundColor: "#201A2C",
+    paddingVertical: 24,
     alignItems: "center",
   },
   row: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 14,
+    gap: 6,
   },
 
   box: {
@@ -77,19 +77,20 @@ const styles = StyleSheet.create({
 
   // Tamanhos
   small: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
+    width: 30,
+    height: 30,
+    borderRadius: 4,
+    fontSize: 12
   },
   medium: {
-    width: 64,
-    height: 64,
-    borderRadius: 16,
+    width: 45,
+    height: 45,
+    borderRadius: 8,
   },
   big: {
-    width: 110,
-    height: 110,
-    borderRadius: 24,
+    width: 70,
+    height: 70,
+    borderRadius: 16,
     backgroundColor: "#372b6c",
   },
 
