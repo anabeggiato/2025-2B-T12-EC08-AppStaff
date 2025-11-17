@@ -1,6 +1,9 @@
 import { StyleSheet, View, Text, Pressable, Alert } from 'react-native'
+import React, { useState } from "react";
 import Feather from '@expo/vector-icons/Feather'
 import MaterialIcons from '@expo/vector-icons/MaterialIcons'
+import PopUpInfosGerais from "@/components/PopUpInfosGerais";
+import PopUpCodigo from "@/components/PopUpCodigo";
 
 type CardTourProps = {
     codigo: string;
@@ -32,8 +35,45 @@ export default function CardTour({
         }
     };
 
-    return (
+     const [mostrarPopUpInfo, setMostrarPopUpInfo] = useState(false);
+    
+     const [mostrarPopUpCodigo, setMostrarPopUpCodigo] = useState(false);
+
+     function abrirPopUp() {
+        setMostrarPopUpInfo(true);
+    }
+      
+    function fecharPopUp() {
+        setMostrarPopUpInfo(false);
+    }
+
+    const handleStartTour = () => {
+        setMostrarPopUpInfo(false); // Fecha PopUpInfosGerais
+        setMostrarPopUpCodigo(true);  // Abre PopUpCodigo
+        // Você pode remover o console.log("Tour iniciado!") daqui, pois o pop-up de código assume o fluxo.
+    };
+    
+    // Funções para PopUpCodigo
+    const fecharPopUpCodigo = () => {
+        setMostrarPopUpCodigo(false);
+    }
+
+return (
         <View style={styles.card_container}>
+            {/* PopUp de Informações Gerais (Primeiro Pop-up) */}
+            <PopUpInfosGerais
+                visible={mostrarPopUpInfo}
+                onClose={fecharPopUp}
+                // onConfirm agora chama a função de transição
+                onConfirm={handleStartTour} 
+            />
+
+            <PopUpCodigo
+                visible={mostrarPopUpCodigo}
+                onClose={fecharPopUpCodigo}
+                onConfirm={() => {}}   
+            />
+
             {/*PARTE SUPERIOR DO CARD*/}
             <View style={styles.topo}>
                 <Text style={styles.text}>Tour #{codigo}</Text>
@@ -62,9 +102,6 @@ export default function CardTour({
                         <MaterialIcons name="arrow-right-alt" size={14} color="black" />
                         <Text>{hora_fim_prevista}</Text>
                     </View>
-
-
-
                 </View>
             </View>
 
@@ -78,8 +115,10 @@ export default function CardTour({
                 <View>
                     {status === "finished" || status === "cancelled" ? (
                         <></>) : (
-                        <Pressable style={styles.button} onPress={() => { Alert.alert("Feito!") }}>
-                            <Text style={{ color: "#FFF", textAlign: "center" }}>{status === "scheduled" ? "Começar tour" : status === "in_progress" ? "Finalizar tour" : "Retomar tour"}</Text>
+                       <Pressable
+                        style={styles.button} onPress={abrirPopUp}>
+                        <Text style={{ color: "#FFF", textAlign: "center" }}>{status === "scheduled" ? "Começar tour" : status === "in_progress" ? "Finalizar tour" : "Retomar tour"}</Text>
+                        
                         </Pressable>
                     )}
                 </View>
