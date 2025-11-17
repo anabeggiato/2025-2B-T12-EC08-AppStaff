@@ -1,15 +1,24 @@
-import React, { useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 
-export default function DateCarousel() {
+type Props = {
+  onDateChange: (date: Date) => void;
+};
+
+export default function DateSelector({ onDateChange }: Props) {
   const [selected, setSelected] = useState(new Date());
 
-  // Gera apenas 5 datas ao redor da selecionada
+  function handleSelect(date: Date) {
+    setSelected(date);
+    onDateChange(date);
+  }
+
   const dates = useMemo(() => {
     const arr = [];
     for (let i = -2; i <= 2; i++) {
       const d = new Date(selected);
       d.setDate(selected.getDate() + i);
+
       arr.push({
         offset: i,
         date: d,
@@ -22,7 +31,6 @@ export default function DateCarousel() {
 
   return (
     <View style={styles.container}>
-
       <View style={styles.row}>
         {dates.map((item, index) => {
           const isCenter = item.offset === 0;
@@ -32,12 +40,12 @@ export default function DateCarousel() {
           return (
             <TouchableOpacity
               key={index}
-              onPress={() => setSelected(item.date)}
+              onPress={() => handleSelect(item.date)}
               style={[
                 styles.box,
                 isCenter && styles.big,
                 isMedium && styles.medium,
-                isSmall && styles.small
+                isSmall && styles.small,
               ]}
             >
               <Text style={styles.dayText}>{item.day}</Text>
@@ -49,7 +57,6 @@ export default function DateCarousel() {
           );
         })}
       </View>
-
     </View>
   );
 }

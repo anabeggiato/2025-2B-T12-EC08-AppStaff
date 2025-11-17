@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { StyleSheet, View, Text, Pressable, TextInput, Alert, ScrollView } from 'react-native'
+import { StyleSheet, View, Text, Pressable, TextInput,  ScrollView } from 'react-native'
 import Feather from '@expo/vector-icons/Feather'
 import MaterialIcons from '@expo/vector-icons/MaterialIcons'
 import type { Tour } from '@/app/(tabs)/index'
@@ -42,6 +42,7 @@ export function AddTourPopup({ onClose, addTour }: Props) {
       codigo: generateCode(),
       responsavel: responsavel,
       status: "scheduled",
+      data: data,
       hora_inicio_prevista: horaInicioPrevista,
       hora_fim_prevista: horaFimPrevista
     };
