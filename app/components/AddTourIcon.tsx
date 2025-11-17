@@ -4,21 +4,26 @@ import { AddTourPopup } from "./AddTourPopup"
 import { useState } from "react"
 
 export function AddTourIcon() {
-  const [openPopup, setOpenPopup] = useState(false)
+  const [openPopup, setOpenPopup] = useState(false);
 
   return (
     <>
       {openPopup && (
-        <AddTourPopup onClose={() => setOpenPopup(false)} />
+        <AddTourPopup
+          onClose={() => setOpenPopup(false)}
+        />
       )}
 
       <View style={styles.container_add_icon}>
-        <Pressable style={styles.add_tour_button} onPress={() => setOpenPopup(true)}>
+        <Pressable
+          style={styles.add_tour_button}
+          onPress={() => setOpenPopup(true)}
+        >
           <Feather name="plus" size={24} color="white" />
         </Pressable>
       </View>
     </>
-  )
+  );
 }
 
 const styles = StyleSheet.create({

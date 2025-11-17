@@ -3,6 +3,7 @@ import { Navbar } from "@/components/navbar";
 import { Header } from "@/components/header";
 import CardTour from "@/components/CardTour";
 import DateSelector from "@/components/DateSelector";
+import { AddTourIcon } from "@/components/AddTourIcon";
 
 if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -124,13 +125,13 @@ const tours: Tour[] = [
   }
 ]
 
-
 export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
       <Header />
       <DateSelector />
+
       <ScrollView
         style={styles.cards}
         contentContainerStyle={{
@@ -151,12 +152,11 @@ export default function HomeScreen() {
         ))}
       </ScrollView>
 
+      <AddTourIcon />
       <Navbar />
     </View>
   );
 }
-
-
 
 const styles = StyleSheet.create({
   container: {
@@ -172,8 +172,4 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     maxHeight: "65%"
   },
-
 });
-
-
-
