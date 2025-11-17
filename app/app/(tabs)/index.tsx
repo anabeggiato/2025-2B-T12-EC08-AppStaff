@@ -4,12 +4,14 @@ import { Header } from "@/components/header";
 import CardTour from "@/components/CardTour";
 import DateSelector from "@/components/DateSelector";
 import { AddTourIcon } from "@/components/AddTourIcon";
+import { useState } from 'react'
+import { AddTourPopup } from "@/components/AddTourPopup"
 
 if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-type Tour = {
+export type Tour = {
   codigo: string;
   responsavel: string;
   status: "scheduled" | "in_progress" | "paused" | "finished" | "cancelled";
@@ -17,7 +19,7 @@ type Tour = {
   hora_fim_prevista: string;
 };
 
-const tours: Tour[] = [
+const initialTours: Tour[] = [
   {
     "codigo": "A1B2C3D4",
     "responsavel": "João Pereira",
@@ -126,11 +128,24 @@ const tours: Tour[] = [
 ]
 
 export default function HomeScreen() {
+  const [tours, setTours] = useState(initialTours);
+  const [openPopup, setOpenPopup] = useState(false);
+
+  function addTour(newTour: Tour) {
+    setTours(prev => [...prev, newTour]);
+  }
 
   return (
     <View style={styles.container}>
       <Header />
       <DateSelector />
+
+      {openPopup && (
+        <AddTourPopup
+          onClose={() => setOpenPopup(false)}
+          addTour={addTour}
+        />
+      )}
 
       <ScrollView
         style={styles.cards}
@@ -152,11 +167,12 @@ export default function HomeScreen() {
         ))}
       </ScrollView>
 
-      <AddTourIcon />
+      <AddTourIcon onOpen={() => setOpenPopup(true)} />
       <Navbar />
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {

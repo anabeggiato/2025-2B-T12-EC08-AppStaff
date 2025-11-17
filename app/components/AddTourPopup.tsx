@@ -1,13 +1,15 @@
 import { useState } from 'react'
-import { StyleSheet, View, Text, Pressable, TextInput, Alert } from 'react-native'
+import { StyleSheet, View, Text, Pressable, TextInput, Alert, ScrollView } from 'react-native'
 import Feather from '@expo/vector-icons/Feather'
 import MaterialIcons from '@expo/vector-icons/MaterialIcons'
+import type { Tour } from '@/app/(tabs)/index'
 
-type AddTourPopupProps = {
+type Props = {
   onClose: () => void;
+  addTour: (tour: Tour) => void;
 };
 
-export function AddTourPopup({ onClose }: AddTourPopupProps) {
+export function AddTourPopup({ onClose, addTour }: Props) {
   const [responsavel, setResponsavel] = useState("");
   const [data, setData] = useState("");
   const [horaInicioPrevista, setHoraInicioPrevista] = useState("");
@@ -20,13 +22,41 @@ export function AddTourPopup({ onClose }: AddTourPopupProps) {
   const [telefone, setTelefone] = useState("");
   const [cidade, setCidade] = useState("");
 
+  function generateCode() {
+    const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    const numbers = "0123456789";
+    let code = "";
+
+    for (let i = 0; i < 4; i++) {
+      const randomLetter = letters[Math.floor(Math.random() * letters.length)];
+      const randomNumber = numbers[Math.floor(Math.random() * numbers.length)];
+
+      code += randomLetter + randomNumber;
+    }
+
+    return code;  
+  }
+
+  function handleSubmit() {
+    const newTour: Tour = {
+      codigo: generateCode(),
+      responsavel: responsavel,
+      status: "scheduled",
+      hora_inicio_prevista: horaInicioPrevista,
+      hora_fim_prevista: horaFimPrevista
+    };
+
+    addTour(newTour);
+    onClose();
+  }
+
   return (
     <View style={styles.overlay}>
       <View style={styles.add_tour_popup}>
-        <View style={styles.topo}>
+        <View style={[styles.topo,]}>
           <Text style={styles.title}>Cadastrar novo tour</Text>
           <View style={styles.botoes}>
-            <Pressable onPress={() => Alert}>
+            <Pressable onPress={handleSubmit}>
               <Feather name="check-circle" size={20} color="#9747FF" />
             </Pressable>
 
@@ -35,139 +65,141 @@ export function AddTourPopup({ onClose }: AddTourPopupProps) {
             </Pressable>
           </View>
         </View>
+        <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
 
-        {/*Informações gerais do tour */}
-        <View style={styles.bloco_input}>
-          <View style={[styles.input_section, { width: "48%" }]}>
-            <Text style={styles.label}>Staff</Text>
-            <TextInput
-              style={styles.input}
-              editable
-              onChangeText={text => setResponsavel(text)}
-              value={responsavel}
-            />
+          {/*Informações gerais do tour */}
+          <View style={styles.bloco_input}>
+            <View style={[styles.input_section, { width: "48%" }]}>
+              <Text style={styles.label}>Staff</Text>
+              <TextInput
+                style={styles.input}
+                editable
+                onChangeText={text => setResponsavel(text)}
+                value={responsavel}
+              />
+            </View>
+
+            <View style={[styles.input_section, { width: "48%" }]}>
+              <Text style={styles.label}>Data</Text>
+              <TextInput
+                style={styles.input}
+                editable
+                onChangeText={text => setData(text)}
+                value={data}
+              />
+            </View>
+
+            <View style={[styles.input_section, { width: "48%" }]}>
+              <Text style={styles.label}>Horário inicial</Text>
+              <TextInput
+                style={styles.input}
+                editable
+                onChangeText={text => setHoraInicioPrevista(text)}
+                value={horaInicioPrevista}
+              />
+            </View>
+
+            <View style={[styles.input_section, { width: "48%" }]}>
+              <Text style={styles.label}>Horário final</Text>
+              <TextInput
+                style={styles.input}
+                editable
+                onChangeText={text => setHoraFimPrevista(text)}
+                value={horaFimPrevista}
+              />
+            </View>
+
+            <View style={[styles.input_section, { width: "48%" }]}>
+              <Text style={styles.label}>Status</Text>
+              <TextInput
+                style={styles.input}
+                editable
+                onChangeText={text => setStatus(text)}
+                value={status}
+              />
+            </View>
           </View>
 
-          <View style={[styles.input_section, { width: "48%" }]}>
-            <Text style={styles.label}>Data</Text>
-            <TextInput
-              style={styles.input}
-              editable
-              onChangeText={text => setData(text)}
-              value={data}
-            />
+          {/*informações do visitante*/}
+          <Text style={[styles.title, { paddingBottom: 8 }]}>Visitantes</Text>
+          <View style={styles.bloco_input}>
+            <View style={[styles.input_section, { width: "95%" }]}>
+              <Text style={styles.label}>Nome</Text>
+              <TextInput
+                style={styles.input}
+                editable
+                onChangeText={text => setNomeVisitante(text)}
+                value={nomeVisitante}
+              />
+            </View>
+
+            <View style={[styles.input_section, { width: "95%" }]}>
+              <Text style={styles.label}>E-mail</Text>
+              <TextInput
+                style={styles.input}
+                editable
+                onChangeText={text => setEmailVisitante(text)}
+                value={emailVisitante}
+              />
+            </View>
+
+            <View style={[styles.input_section, { width: "95%" }]}>
+              <Text style={styles.label}>Perfil</Text>
+              <TextInput
+                style={styles.input}
+                editable
+                onChangeText={text => setPerfilVisitante(text)}
+                value={perfilvisitante}
+              />
+            </View>
+
+            <View style={[styles.input_section, { width: "48%" }]}>
+              <Text style={styles.label}>CPF</Text>
+              <TextInput
+                style={styles.input}
+                editable
+                onChangeText={text => setCpf(text)}
+                value={cpf}
+              />
+            </View>
+
+            <View style={[styles.input_section, { width: "48%" }]}>
+              <Text style={styles.label}>Telefone</Text>
+              <TextInput
+                style={styles.input}
+                editable
+                onChangeText={text => setTelefone(text)}
+                value={telefone}
+              />
+            </View>
+
+            <View style={[styles.input_section, { width: "48%" }]}>
+              <Text style={styles.label}>Estado</Text>
+              <TextInput
+                style={styles.input}
+                editable
+                onChangeText={text => setCpf(text)}
+                value={cpf}
+              />
+            </View>
+
+            <View style={[styles.input_section, { width: "48%" }]}>
+              <Text style={styles.label}>Cidade</Text>
+              <TextInput
+                style={styles.input}
+                editable
+                onChangeText={text => setCidade(text)}
+                value={cidade}
+              />
+            </View>
           </View>
 
-          <View style={[styles.input_section, { width: "48%" }]}>
-            <Text style={styles.label}>Horário inicial</Text>
-            <TextInput
-              style={styles.input}
-              editable
-              onChangeText={text => setHoraInicioPrevista(text)}
-              value={horaInicioPrevista}
-            />
+          <View style={styles.button_section}>
+            <Pressable style={styles.button}>
+              <Text style={{ color: "#855EDE" }}>Adicionar visitante</Text>
+            </Pressable>
           </View>
-
-          <View style={[styles.input_section, { width: "48%" }]}>
-            <Text style={styles.label}>Horário final</Text>
-            <TextInput
-              style={styles.input}
-              editable
-              onChangeText={text => setHoraFimPrevista(text)}
-              value={horaFimPrevista}
-            />
-          </View>
-
-          <View style={[styles.input_section, { width: "48%" }]}>
-            <Text style={styles.label}>Status</Text>
-            <TextInput
-              style={styles.input}
-              editable
-              onChangeText={text => setStatus(text)}
-              value={status}
-            />
-          </View>
-        </View>
-
-        {/*informações do visitante*/}
-        <Text style={[styles.title, { paddingBottom: 8 }]}>Visitantes</Text>
-        <View style={styles.bloco_input}>
-          <View style={[styles.input_section, { width: "95%" }]}>
-            <Text style={styles.label}>Nome</Text>
-            <TextInput
-              style={styles.input}
-              editable
-              onChangeText={text => setNomeVisitante(text)}
-              value={nomeVisitante}
-            />
-          </View>
-
-          <View style={[styles.input_section, { width: "95%" }]}>
-            <Text style={styles.label}>E-mail</Text>
-            <TextInput
-              style={styles.input}
-              editable
-              onChangeText={text => setEmailVisitante(text)}
-              value={emailVisitante}
-            />
-          </View>
-
-          <View style={[styles.input_section, { width: "95%" }]}>
-            <Text style={styles.label}>Perfil</Text>
-            <TextInput
-              style={styles.input}
-              editable
-              onChangeText={text => setPerfilVisitante(text)}
-              value={perfilvisitante}
-            />
-          </View>
-
-          <View style={[styles.input_section, { width: "48%" }]}>
-            <Text style={styles.label}>CPF</Text>
-            <TextInput
-              style={styles.input}
-              editable
-              onChangeText={text => setCpf(text)}
-              value={cpf}
-            />
-          </View>
-
-          <View style={[styles.input_section, { width: "48%" }]}>
-            <Text style={styles.label}>Telefone</Text>
-            <TextInput
-              style={styles.input}
-              editable
-              onChangeText={text => setTelefone(text)}
-              value={telefone}
-            />
-          </View>
-
-          <View style={[styles.input_section, { width: "48%" }]}>
-            <Text style={styles.label}>Estado</Text>
-            <TextInput
-              style={styles.input}
-              editable
-              onChangeText={text => setCpf(text)}
-              value={cpf}
-            />
-          </View>
-
-          <View style={[styles.input_section, { width: "48%" }]}>
-            <Text style={styles.label}>Cidade</Text>
-            <TextInput
-              style={styles.input}
-              editable
-              onChangeText={text => setCidade(text)}
-              value={cidade}
-            />
-          </View>
-        </View>
-
-        <View style={styles.button_section}>
-          <Pressable style={styles.button}>
-            <Text style={{color: "#855EDE"}}>Adicionar visitante</Text>
-          </Pressable>
-        </View>
+        </ScrollView>
       </View>
     </View>
   )
@@ -191,7 +223,8 @@ const styles = StyleSheet.create({
     marginTop: 60,
     elevation: 6,
     padding: 16,
-    zIndex: 2
+    zIndex: 2,
+    maxHeight: "95%"
   },
 
   title: {
@@ -242,7 +275,6 @@ const styles = StyleSheet.create({
   input: {
     fontSize: 14,
     paddingHorizontal: 0,
-    height: 20
   },
 
   button_section: {

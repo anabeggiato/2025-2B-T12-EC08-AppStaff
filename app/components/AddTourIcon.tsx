@@ -1,28 +1,22 @@
 import { StyleSheet, Pressable, View } from "react-native"
 import Feather from '@expo/vector-icons/Feather'
-import { AddTourPopup } from "./AddTourPopup"
-import { useState } from "react"
 
-export function AddTourIcon() {
-  const [openPopup, setOpenPopup] = useState(false);
+
+type Props = {
+  onOpen: () => void;
+};
+
+export function AddTourIcon({ onOpen }: Props) {
 
   return (
-    <>
-      {openPopup && (
-        <AddTourPopup
-          onClose={() => setOpenPopup(false)}
-        />
-      )}
-
-      <View style={styles.container_add_icon}>
-        <Pressable
-          style={styles.add_tour_button}
-          onPress={() => setOpenPopup(true)}
-        >
-          <Feather name="plus" size={24} color="white" />
-        </Pressable>
-      </View>
-    </>
+    <View style={styles.container_add_icon}>
+      <Pressable
+        style={styles.add_tour_button}
+        onPress={onOpen}
+      >
+        <Feather name="plus" size={24} color="white" />
+      </Pressable>
+    </View>
   );
 }
 
