@@ -1,39 +1,45 @@
-import { useState } from 'react';
 import { View, Pressable, Text, StyleSheet, LayoutAnimation } from 'react-native';
-import { Feather, Octicons } from '@expo/vector-icons';
-
-
-type PageName = "tours" | "mapa" | "menu";
+import { Feather, Octicons, AntDesign } from '@expo/vector-icons';
+import { useRouter, usePathname } from "expo-router";
 
 export function Navbar() {
-    const [page, setPage] = useState<PageName>("tours");
+    const pathname = usePathname();
+    const router = useRouter();
 
+    const isActive = (route: string) => pathname === route;
 
-    const handlePress = (name: PageName) => {
+    const handlePress = (route: string) => {
         LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-        setPage(name);
+        router.push(route);
     };
 
     return (
         <View style={styles.navbar}>
-            <Pressable onPress={() => handlePress("tours")}>
-                <View style={[styles.item, page === "tours" && styles.itemActive]}>
-                    <Octicons name="workflow" size={24} color="#FFF" />
-                    {page === "tours" && <Text style={styles.text}>Tours</Text>}
+            <Pressable onPress={() => handlePress("/")}>
+                <View style={[styles.item, isActive("/") && styles.itemActive]}>
+                    <Octicons name="workflow" size={22} color="#FFF" />
+                    {isActive("/") && <Text style={styles.text}>Tours</Text>}
                 </View>
             </Pressable>
 
-            <Pressable onPress={() => handlePress("mapa")}>
-                <View style={[styles.item, page === "mapa" && styles.itemActive]}>
+            <Pressable onPress={() => handlePress("/mapa")}>
+                <View style={[styles.item, isActive("/mapa") && styles.itemActive]}>
                     <Feather name="map" size={20} color="#FFF" />
-                    {page === "mapa" && <Text style={styles.text}>Mapa</Text>}
+                    {isActive("/mapa") && <Text style={styles.text}>Mapa</Text>}
                 </View>
             </Pressable>
 
-            <Pressable onPress={() => handlePress("menu")}>
-                <View style={[styles.item, page === "menu" && styles.itemActive]}>
-                    <Octicons name="three-bars" size={24} color="#FFF" />
-                    {page === "menu" && <Text style={styles.text}>Menu</Text>}
+            <Pressable onPress={() => handlePress("/alerta")}>
+                <View style={[styles.item, isActive("/alerta") && styles.itemActive]}>
+                    <AntDesign name="alert" size={20} color="#FFF" />
+                    {isActive("/alerta") && <Text style={styles.text}>Alerta</Text>}
+                </View>
+            </Pressable>
+
+            <Pressable onPress={() => handlePress("/menu")}>
+                <View style={[styles.item, isActive("/menu") && styles.itemActive]}>
+                    <Octicons name="three-bars" size={22} color="#FFF" />
+                    {isActive("/menu") && <Text style={styles.text}>Menu</Text>}
                 </View>
             </Pressable>
         </View>
@@ -44,7 +50,7 @@ const styles = StyleSheet.create({
     navbar: {
         flexDirection: "row",
         justifyContent: "space-between",
-        backgroundColor: "rgba(92, 61, 169, 0.3)",
+        backgroundColor: "rgba(92, 61, 169, 0.6)",
         borderRadius: 50,
         width: "95%",
         position: "absolute",
@@ -57,15 +63,15 @@ const styles = StyleSheet.create({
         alignItems: "center",
         gap: 6,
         paddingVertical: 10,
-        paddingHorizontal: 32,
+        paddingHorizontal: 16,
         borderRadius: 24,
     },
     itemActive: {
         backgroundColor: "#5C3DA9",
-        borderRadius: 50,
     },
     text: {
         color: "#FFF",
         fontWeight: "600",
+        fontSize: 14,
     },
 });
