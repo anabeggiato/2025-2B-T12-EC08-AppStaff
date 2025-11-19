@@ -1,5 +1,5 @@
 import { View, Pressable, Text, StyleSheet, LayoutAnimation } from 'react-native';
-import { Feather, Octicons } from '@expo/vector-icons';
+import { Feather, Octicons, AntDesign } from '@expo/vector-icons';
 import { useRouter, usePathname } from "expo-router";
 
 export function Navbar() {
@@ -17,7 +17,7 @@ export function Navbar() {
         <View style={styles.navbar}>
             <Pressable onPress={() => handlePress("/")}>
                 <View style={[styles.item, isActive("/") && styles.itemActive]}>
-                    <Octicons name="workflow" size={24} color="#FFF" />
+                    <Octicons name="workflow" size={22} color="#FFF" />
                     {isActive("/") && <Text style={styles.text}>Tours</Text>}
                 </View>
             </Pressable>
@@ -29,16 +29,22 @@ export function Navbar() {
                 </View>
             </Pressable>
 
+            <Pressable onPress={() => handlePress("/alerta")}>
+                <View style={[styles.item, isActive("/alerta") && styles.itemActive]}>
+                    <AntDesign name="alert" size={20} color="#FFF" />
+                    {isActive("/alerta") && <Text style={styles.text}>Alerta</Text>}
+                </View>
+            </Pressable>
+
             <Pressable onPress={() => handlePress("/menu")}>
                 <View style={[styles.item, isActive("/menu") && styles.itemActive]}>
-                    <Octicons name="three-bars" size={24} color="#FFF" />
+                    <Octicons name="three-bars" size={22} color="#FFF" />
                     {isActive("/menu") && <Text style={styles.text}>Menu</Text>}
                 </View>
             </Pressable>
         </View>
     );
 }
-
 
 const styles = StyleSheet.create({
     navbar: {
@@ -57,15 +63,15 @@ const styles = StyleSheet.create({
         alignItems: "center",
         gap: 6,
         paddingVertical: 10,
-        paddingHorizontal: 32,
+        paddingHorizontal: 16,
         borderRadius: 24,
     },
     itemActive: {
         backgroundColor: "#5C3DA9",
-        borderRadius: 50,
     },
     text: {
         color: "#FFF",
         fontWeight: "600",
+        fontSize: 14,
     },
 });
