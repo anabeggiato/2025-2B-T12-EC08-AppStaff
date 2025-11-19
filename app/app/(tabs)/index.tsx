@@ -175,7 +175,7 @@ export default function HomeScreen() {
 
       <ScrollView
         style={styles.cards}
-        contentContainerStyle={{ alignItems: "center", gap: 24 }}
+        contentContainerStyle={{ alignItems: "center", gap: 24, marginTop: 50 }}
         showsVerticalScrollIndicator={false}
       >
         {filteredTours.map((tour) => (
