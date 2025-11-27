@@ -1,15 +1,24 @@
-import React, { useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 
-export default function DateCarousel() {
+type Props = {
+  onDateChange: (date: Date) => void;
+};
+
+export default function DateSelector({ onDateChange }: Props) {
   const [selected, setSelected] = useState(new Date());
 
-  // Gera apenas 5 datas ao redor da selecionada
+  function handleSelect(date: Date) {
+    setSelected(date);
+    onDateChange(date);
+  }
+
   const dates = useMemo(() => {
     const arr = [];
     for (let i = -2; i <= 2; i++) {
       const d = new Date(selected);
       d.setDate(selected.getDate() + i);
+
       arr.push({
         offset: i,
         date: d,
@@ -22,7 +31,6 @@ export default function DateCarousel() {
 
   return (
     <View style={styles.container}>
-
       <View style={styles.row}>
         {dates.map((item, index) => {
           const isCenter = item.offset === 0;
@@ -32,12 +40,12 @@ export default function DateCarousel() {
           return (
             <TouchableOpacity
               key={index}
-              onPress={() => setSelected(item.date)}
+              onPress={() => handleSelect(item.date)}
               style={[
                 styles.box,
                 isCenter && styles.big,
                 isMedium && styles.medium,
-                isSmall && styles.small
+                isSmall && styles.small,
               ]}
             >
               <Text style={styles.dayText}>{item.day}</Text>
@@ -49,21 +57,22 @@ export default function DateCarousel() {
           );
         })}
       </View>
-
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: "#1b1628",
-    paddingVertical: 40,
+    backgroundColor: "#201A2C",
+    paddingVertical: 24,
     alignItems: "center",
+    position: "absolute",
+    top: 120
   },
   row: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 14,
+    gap: 6,
   },
 
   box: {
@@ -77,19 +86,20 @@ const styles = StyleSheet.create({
 
   // Tamanhos
   small: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
+    width: 30,
+    height: 30,
+    borderRadius: 4,
+    fontSize: 12
   },
   medium: {
-    width: 64,
-    height: 64,
-    borderRadius: 16,
+    width: 45,
+    height: 45,
+    borderRadius: 8,
   },
   big: {
-    width: 110,
-    height: 110,
-    borderRadius: 24,
+    width: 70,
+    height: 70,
+    borderRadius: 16,
     backgroundColor: "#372b6c",
   },
 
