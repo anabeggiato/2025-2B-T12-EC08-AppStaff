@@ -204,25 +204,29 @@ export function AddTourPopup({ onClose, addTour }: Props) {
             <CheckBox
               title='Vai trazer acompanhante?'
               checked={acompanhante}
-              onPress={() => setAcompanhante(true)} />
+              onPress={() => setAcompanhante(!acompanhante)} />
 
             {acompanhante && (
               <>
-                <Text style={styles.label}>Nome do Acompanhante</Text>
-                <TextInput
-                  style={styles.input}
-                  editable
-                  onChangeText={text => setNomeAcompanhante(text)}
-                  value={nomeAcompanhante}
-                />
+                <View style={[styles.input_section, { width: "95%" }]}>
+                  <Text style={styles.label}>Nome do Acompanhante</Text>
+                  <TextInput
+                    style={styles.input}
+                    editable
+                    onChangeText={text => setNomeAcompanhante(text)}
+                    value={nomeAcompanhante}
+                  />
+                </View>
 
-                <Text style={styles.label}>CPF do Acompanhante</Text>
-                <TextInput
-                  style={styles.input}
-                  editable
-                  onChangeText={text => setCpfAcompanhante(text)}
-                  value={cpfAcompanhante}
-                />
+                <View style={[styles.input_section, { width: "95%" }]}>
+                  <Text style={styles.label}>CPF do Acompanhante</Text>
+                  <TextInput
+                    style={styles.input}
+                    editable
+                    onChangeText={text => setCpfAcompanhante(text)}
+                    value={cpfAcompanhante}
+                  />
+                </View>
               </>
             )}
           </View>
