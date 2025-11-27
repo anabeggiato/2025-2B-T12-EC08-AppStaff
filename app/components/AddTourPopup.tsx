@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { StyleSheet, View, Text, Pressable, TextInput,  ScrollView } from 'react-native'
+import { StyleSheet, View, Text, Pressable, TextInput, ScrollView } from 'react-native'
+import { CheckBox } from 'react-native-elements'
 import Feather from '@expo/vector-icons/Feather'
 import MaterialIcons from '@expo/vector-icons/MaterialIcons'
 import type { Tour } from '@/app/(tabs)/index'
@@ -18,9 +19,13 @@ export function AddTourPopup({ onClose, addTour }: Props) {
   const [nomeVisitante, setNomeVisitante] = useState("");
   const [emailVisitante, setEmailVisitante] = useState("");
   const [perfilvisitante, setPerfilVisitante] = useState("");
+  const [estado, setEstado] = useState("");
   const [cpf, setCpf] = useState("");
   const [telefone, setTelefone] = useState("");
   const [cidade, setCidade] = useState("");
+  const [acompanhante, setAcompanhante] = useState(false);
+  const [nomeAcompanhante, setNomeAcompanhante] = useState("");
+  const [cpfAcompanhante, setCpfAcompanhante] = useState("")
 
   function generateCode() {
     const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -34,7 +39,7 @@ export function AddTourPopup({ onClose, addTour }: Props) {
       code += randomLetter + randomNumber;
     }
 
-    return code;  
+    return code;
   }
 
   function handleSubmit() {
@@ -179,8 +184,8 @@ export function AddTourPopup({ onClose, addTour }: Props) {
               <TextInput
                 style={styles.input}
                 editable
-                onChangeText={text => setCpf(text)}
-                value={cpf}
+                onChangeText={text => setEstado(text)}
+                value={estado}
               />
             </View>
 
@@ -195,10 +200,31 @@ export function AddTourPopup({ onClose, addTour }: Props) {
             </View>
           </View>
 
-          <View style={styles.button_section}>
-            <Pressable style={styles.button}>
-              <Text style={{ color: "#855EDE" }}>Adicionar visitante</Text>
-            </Pressable>
+          <View>
+            <CheckBox
+              title='Vai trazer acompanhante?'
+              checked={acompanhante}
+              onPress={() => setAcompanhante(true)} />
+
+            {acompanhante && (
+              <>
+                <Text style={styles.label}>Nome do Acompanhante</Text>
+                <TextInput
+                  style={styles.input}
+                  editable
+                  onChangeText={text => setNomeAcompanhante(text)}
+                  value={nomeAcompanhante}
+                />
+
+                <Text style={styles.label}>CPF do Acompanhante</Text>
+                <TextInput
+                  style={styles.input}
+                  editable
+                  onChangeText={text => setCpfAcompanhante(text)}
+                  value={cpfAcompanhante}
+                />
+              </>
+            )}
           </View>
         </ScrollView>
       </View>
