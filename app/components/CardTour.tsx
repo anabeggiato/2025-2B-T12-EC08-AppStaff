@@ -6,11 +6,13 @@ import PopUpInfosGerais from "@/components/PopUpInfosGerais";
 import PopUpCodigo from "@/components/PopUpCodigo";
 
 type CardTourProps = {
+    id?: number;
     codigo: string;
     responsavel: string;
     status: "scheduled" | "in_progress" | "paused" | "finished" | "cancelled";
     hora_inicio_prevista: string;
     hora_fim_prevista: string;
+    onDelete?: () => void;
 };
 
 export default function CardTour({
@@ -19,6 +21,7 @@ export default function CardTour({
     status,
     hora_inicio_prevista,
     hora_fim_prevista,
+    onDelete,
 }: CardTourProps) {
     const getStyle = () => {
         switch (status) {
@@ -82,7 +85,7 @@ return (
                         <Feather name="edit-2" size={20} color="#9747FF" />
                     </Pressable>
 
-                    <Pressable onPress={() => { Alert.alert("Delete") }}>
+                    <Pressable onPress={onDelete}>
                         <MaterialIcons name="close" size={20} color="black" />
                     </Pressable>
                 </View>
