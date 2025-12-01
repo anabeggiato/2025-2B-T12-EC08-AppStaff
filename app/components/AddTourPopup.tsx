@@ -5,6 +5,7 @@ import Feather from '@expo/vector-icons/Feather'
 import MaterialIcons from '@expo/vector-icons/MaterialIcons'
 import type { Tour } from '@/app/(tabs)/index'
 import DateTimePicker from '@react-native-community/datetimepicker'
+import { Picker } from '@react-native-picker/picker'
 
 type Props = {
   onClose: () => void;
@@ -114,6 +115,13 @@ export function AddTourPopup({ onClose, addTour }: Props) {
     }
     setShowTimeFim(false);
   };
+
+  const estadosBrasil = [
+    "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA",
+    "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN",
+    "RS", "RO", "RR", "SC", "SP", "SE", "TO"
+  ];
+
 
 
   return (
@@ -271,12 +279,21 @@ export function AddTourPopup({ onClose, addTour }: Props) {
 
             <View style={[styles.input_section, { width: "48%" }]}>
               <Text style={styles.label}>Estado</Text>
-              <TextInput
-                style={styles.input}
-                onChangeText={text => updateField("estado", text)}
-                value={form.estado}
-              />
+
+              <View style={[styles.input, { paddingLeft: 0, paddingRight: 0 }]}>
+                <Picker
+                  selectedValue={form.estado}
+                  onValueChange={(value) => updateField("estado", value)}
+                >
+                  <Picker.Item label="Estado" value="" />
+                  {estadosBrasil.map(uf => (
+                    <Picker.Item key={uf} label={uf} value={uf} />
+                  ))}
+                </Picker>
+              </View>
             </View>
+
+
 
             <View style={[styles.input_section, { width: "48%" }]}>
               <Text style={styles.label}>Cidade</Text>
