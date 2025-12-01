@@ -1,11 +1,12 @@
-import { View, StyleSheet, Platform, UIManager, ScrollView } from "react-native"
+import { View, StyleSheet, Platform, UIManager, ScrollView, Text } from "react-native"
 import { Navbar } from "@/components/navbar";
 import { Header } from "@/components/header";
 import CardTour from "@/components/CardTour";
 import DateSelector from "@/components/DateSelector";
 import { AddTourIcon } from "@/components/AddTourIcon";
-import { useState } from 'react'
-import { AddTourPopup } from "@/components/AddTourPopup"
+import { useEffect, useState } from "react";
+import { AddTourPopup } from "@/components/AddTourPopup";
+import { tourService, type Tour as ApiTour } from "@/services/api";
 
 if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -143,14 +144,72 @@ const initialTours: Tour[] = [
   }
 ]
 
+function normalizeStatus(status: string | undefined): Tour["status"] {
+  const allowed: Tour["status"][] = ["scheduled", "in_progress", "paused", "finished", "cancelled"];
+  return allowed.includes(status as Tour["status"]) ? (status as Tour["status"]) : "scheduled";
+}
+
+function formatApiDate(apiDate: string) {
+  if (!apiDate) return "";
+  const parts = apiDate.split("-");
+  if (parts.length === 3) {
+    const [year, month, dayWithTime] = parts;
+    const day = dayWithTime.split("T")[0];
+    return `${day.padStart(2, "0")}/${month.padStart(2, "0")}/${year}`;
+  }
+
+  const parsed = new Date(apiDate);
+  return Number.isNaN(parsed.getTime()) ? apiDate : parsed.toLocaleDateString("pt-BR");
+}
+
+function formatTime(value: string | null) {
+  if (!value) return "--:--";
+  const [hour, minute] = value.split(":");
+  const safeMinute = minute?.split(".")[0]; 
+  return `${hour?.padStart(2, "0") ?? "--"}:${safeMinute?.padStart(2, "0") ?? "--"}`;
+}
+
+function mapApiTourToUi(tour: ApiTour): Tour {
+  return {
+    codigo: tour.codigo,
+    responsavel: tour.responsavel_id ? `Responsável #${tour.responsavel_id}` : "Não informado",
+    status: normalizeStatus(tour.status),
+    data: formatApiDate(tour.data_local),
+    hora_inicio_prevista: formatTime(tour.hora_inicio_prevista),
+    hora_fim_prevista: formatTime(tour.hora_fim_prevista),
+  };
+}
+
 export default function HomeScreen() {
   const [tours, setTours] = useState(initialTours);
   const [openPopup, setOpenPopup] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   function formatDate(date: Date) {
     return date.toLocaleDateString("pt-BR");
   }
+
+  useEffect(() => {
+    async function fetchTours() {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const response = await tourService.list();
+        const mapped = response.data.map(mapApiTourToUi);
+        setTours(mapped);
+      } catch (err) {
+        console.error("Erro ao buscar tours", err);
+        setError("Não foi possível carregar os tours agora.");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchTours();
+  }, []);
 
   function addTour(newTour: Tour) {
     setTours(prev => [...prev, newTour]);
@@ -178,7 +237,19 @@ export default function HomeScreen() {
         contentContainerStyle={{ alignItems: "center", gap: 24, marginTop: 50 }}
         showsVerticalScrollIndicator={false}
       >
-        {filteredTours.map((tour) => (
+        {isLoading && (
+          <Text style={{ color: "white" }}>Carregando tours...</Text>
+        )}
+
+        {error && !isLoading && (
+          <Text style={{ color: "white" }}>{error}</Text>
+        )}
+
+        {!isLoading && !filteredTours.length && !error && (
+          <Text style={{ color: "white" }}>Nenhum tour para esta data.</Text>
+        )}
+
+        {!isLoading && filteredTours.map((tour) => (
           <CardTour key={tour.codigo} {...tour} />
         ))}
       </ScrollView>
