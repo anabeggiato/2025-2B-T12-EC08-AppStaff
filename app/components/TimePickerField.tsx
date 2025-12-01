@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native'
+import { View, Text, TextInput, StyleSheet, TouchableOpacity } from 'react-native'
 import DateTimePicker from '@react-native-community/datetimepicker'
 
 type Props = {
@@ -32,7 +32,7 @@ export function TimePickerField({ label, value, onChange, width = "48%", testID 
     <View style={[styles.input_section, { width }]}>
       <Text style={styles.label}>{label}</Text>
       
-      <TouchableOpacity onPress={() => setShow(true)}>
+      <TouchableOpacity onPress={() => setShow(true)} activeOpacity={0.8}>
         <TextInput
           style={styles.input}
           value={value}
