@@ -1,11 +1,13 @@
 import { useState } from 'react'
-import { StyleSheet, View, Text, Pressable, TextInput, ScrollView, TouchableOpacity, Platform } from 'react-native'
-import { CheckBox } from 'react-native-elements'
+import { StyleSheet, View, Text, Pressable, ScrollView } from 'react-native'
 import Feather from '@expo/vector-icons/Feather'
 import MaterialIcons from '@expo/vector-icons/MaterialIcons'
 import type { Tour } from '@/app/(tabs)/index'
-import DateTimePicker from '@react-native-community/datetimepicker'
-import { Picker } from '@react-native-picker/picker'
+import { FormInput } from './FormInput'
+import { DatePickerField } from './DatePickerField'
+import { TimePickerField } from './TimePickerField'
+import { StatePickerField } from './StatePickerField'
+import { CompanionSection } from './CompanionSection'
 
 type Props = {
   onClose: () => void;
@@ -13,7 +15,6 @@ type Props = {
 };
 
 export function AddTourPopup({ onClose, addTour }: Props) {
-
   const [form, setForm] = useState({
     responsavel: "",
     data: new Date(),
@@ -32,13 +33,7 @@ export function AddTourPopup({ onClose, addTour }: Props) {
     cpfAcompanhante: ""
   });
 
-  const [mode, setMode] = useState('date');
-  const [show, setShow] = useState(false);
-  const [showTimeInicio, setShowTimeInicio] = useState(false);
-  const [showTimeFim, setShowTimeFim] = useState(false);
-
-
-  function updateField(field, value) {
+  function updateField(field: string, value: any) {
     setForm(prev => ({ ...prev, [field]: value }));
   }
 
@@ -70,64 +65,30 @@ export function AddTourPopup({ onClose, addTour }: Props) {
     onClose();
   }
 
-  const showDatepicker = () => {
-    setShow(true);
-  };
+  const handleHoraInicioChange = (hora: string) => {
+    updateField("horaInicioPrevista", hora);
 
-  const changeDate = (event, selectedDate) => {
-    const currentDate = selectedDate || form.data;
-    setShow(Platform.OS === 'ios');
-    updateField("data", currentDate);
-  };
+    // Cria nova data para o horário final
+    const [horas, minutos] = hora.split(':');
+    const inicio = new Date();
+    inicio.setHours(parseInt(horas), parseInt(minutos));
 
-  const formatarData = (d) => {
-    return d.toLocaleDateString("pt-BR");
-  };
+    const fim = new Date(inicio.getTime());
+    fim.setHours(fim.getHours() + 1);
 
-  const formatarHora = (date: Date) => {
-    return date.toLocaleTimeString("pt-BR", {
+    const horaFim = fim.toLocaleTimeString("pt-BR", {
       hour: "2-digit",
       minute: "2-digit",
       hour12: false
     });
+
+    updateField("horaFimPrevista", horaFim);
   };
-
-  const changeHoraInicio = (event, selectedDate) => {
-    if (selectedDate) {
-      // Define horário inicial
-      updateField("horaInicioPrevista", formatarHora(selectedDate));
-
-      // Cria nova data para o horário final
-      const fim = new Date(selectedDate.getTime());
-      fim.setHours(fim.getHours() + 1);
-
-      // Define horário final automaticamente
-      updateField("horaFimPrevista", formatarHora(fim));
-    }
-
-    setShowTimeInicio(false);
-  };
-
-
-  const changeHoraFim = (event, selectedDate) => {
-    if (selectedDate) {
-      updateField("horaFimPrevista", formatarHora(selectedDate));
-    }
-    setShowTimeFim(false);
-  };
-
-  const estadosBrasil = [
-    "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA",
-    "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN",
-    "RS", "RO", "RR", "SC", "SP", "SE", "TO"
-  ];
-
-
 
   return (
     <View style={styles.overlay}>
       <View style={styles.add_tour_popup}>
-        <View style={[styles.topo]}>
+        <View style={styles.topo}>
           <Text style={styles.title}>Cadastrar novo tour</Text>
           <View style={styles.botoes}>
             <Pressable onPress={handleSubmit}>
@@ -141,206 +102,106 @@ export function AddTourPopup({ onClose, addTour }: Props) {
         </View>
 
         <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
-
-          {/*Informações gerais*/}
+          {/* Informações gerais */}
           <View style={styles.bloco_input}>
-            <View style={[styles.input_section, { width: "48%" }]}>
-              <Text style={styles.label}>Staff</Text>
-              <TextInput
-                style={styles.input}
-                editable
-                onChangeText={text => updateField("responsavel", text)}
-                value={form.responsavel}
-              />
-            </View>
+            <FormInput
+              label="Staff"
+              value={form.responsavel}
+              onChangeText={text => updateField("responsavel", text)}
+              width="48%"
+            />
 
-            <View style={[styles.input_section, { width: "48%" }]}>
-              <Text style={styles.label}>Data</Text>
+            <DatePickerField
+              label="Data"
+              value={form.data}
+              onChange={date => updateField("data", date)}
+              width="48%"
+            />
 
-              <TouchableOpacity onPress={showDatepicker}>
-                <TextInput
-                  style={styles.input}
-                  value={formatarData(form.data)}
-                  editable={false}
-                  pointerEvents="none"
-                />
-              </TouchableOpacity>
+            <TimePickerField
+              label="Horário inicial"
+              value={form.horaInicioPrevista}
+              onChange={handleHoraInicioChange}
+              width="48%"
+              testID="timePickerInicio"
+            />
 
-              {show && (
-                <DateTimePicker
-                  testID="dateTimePicker"
-                  value={form.data}
-                  mode="date"
-                  is24Hour={true}
-                  display="default"
-                  onChange={changeDate}
-                />
-              )}
-            </View>
-
-            <View style={[styles.input_section, { width: "48%" }]}>
-              <Text style={styles.label}>Horário inicial</Text>
-
-              <TouchableOpacity onPress={() => setShowTimeInicio(true)}>
-                <TextInput
-                  style={styles.input}
-                  value={form.horaInicioPrevista}
-                  editable={false}
-                  pointerEvents="none"
-                />
-              </TouchableOpacity>
-
-              {showTimeInicio && (
-                <DateTimePicker
-                  testID="timePickerInicio"
-                  value={new Date()}
-                  mode="time"
-                  is24Hour={true}
-                  display="default"
-                  onChange={changeHoraInicio}
-                />
-              )}
-            </View>
-
-
-            <View style={[styles.input_section, { width: "48%" }]}>
-              <Text style={styles.label}>Horário final</Text>
-
-              <TouchableOpacity onPress={() => setShowTimeFim(true)}>
-                <TextInput
-                  style={styles.input}
-                  value={form.horaFimPrevista}
-                  editable={false}
-                  pointerEvents="none"
-                />
-              </TouchableOpacity>
-
-              {showTimeFim && (
-                <DateTimePicker
-                  testID="timePickerFim"
-                  value={new Date()}
-                  mode="time"
-                  is24Hour={true}
-                  display="default"
-                  onChange={changeHoraFim}
-                />
-              )}
-            </View>
+            <TimePickerField
+              label="Horário final"
+              value={form.horaFimPrevista}
+              onChange={hora => updateField("horaFimPrevista", hora)}
+              width="48%"
+              testID="timePickerFim"
+            />
           </View>
 
-          {/*Visitantes*/}
+          {/* Visitantes */}
           <Text style={[styles.title, { paddingBottom: 8 }]}>Visitantes</Text>
 
           <View style={styles.bloco_input}>
-            <View style={[styles.input_section, { width: "95%" }]}>
-              <Text style={styles.label}>Nome</Text>
-              <TextInput
-                style={styles.input}
-                onChangeText={text => updateField("nomeVisitante", text)}
-                value={form.nomeVisitante}
-              />
-            </View>
-
-            <View style={[styles.input_section, { width: "95%" }]}>
-              <Text style={styles.label}>E-mail</Text>
-              <TextInput
-                style={styles.input}
-                onChangeText={text => updateField("emailVisitante", text)}
-                value={form.emailVisitante}
-              />
-            </View>
-
-            <View style={[styles.input_section, { width: "95%" }]}>
-              <Text style={styles.label}>Perfil</Text>
-              <TextInput
-                style={styles.input}
-                onChangeText={text => updateField("perfilvisitante", text)}
-                value={form.perfilvisitante}
-              />
-            </View>
-
-            <View style={[styles.input_section, { width: "48%" }]}>
-              <Text style={styles.label}>CPF</Text>
-              <TextInput
-                style={styles.input}
-                onChangeText={text => updateField("cpf", text)}
-                value={form.cpf}
-              />
-            </View>
-
-            <View style={[styles.input_section, { width: "48%" }]}>
-              <Text style={styles.label}>Telefone</Text>
-              <TextInput
-                style={styles.input}
-                onChangeText={text => updateField("telefone", text)}
-                value={form.telefone}
-              />
-            </View>
-
-            <View style={[styles.input_section, { width: "48%" }]}>
-              <Text style={styles.label}>Estado</Text>
-
-              <View style={[styles.input, { paddingLeft: 0, paddingRight: 0 }]}>
-                <Picker
-                  selectedValue={form.estado}
-                  onValueChange={(value) => updateField("estado", value)}
-                >
-                  <Picker.Item label="Estado" value="" />
-                  {estadosBrasil.map(uf => (
-                    <Picker.Item key={uf} label={uf} value={uf} />
-                  ))}
-                </Picker>
-              </View>
-            </View>
-
-
-
-            <View style={[styles.input_section, { width: "48%" }]}>
-              <Text style={styles.label}>Cidade</Text>
-              <TextInput
-                style={styles.input}
-                onChangeText={text => updateField("cidade", text)}
-                value={form.cidade}
-              />
-            </View>
-          </View>
-
-          <View>
-            <CheckBox
-              title='Vai trazer acompanhante?'
-              checked={form.acompanhante}
-              onPress={() => updateField("acompanhante", !form.acompanhante)}
+            <FormInput
+              label="Nome"
+              value={form.nomeVisitante}
+              onChangeText={text => updateField("nomeVisitante", text)}
+              width="95%"
             />
 
-            {form.acompanhante && (
-              <>
-                <View style={[styles.input_section, { width: "95%" }]}>
-                  <Text style={styles.label}>Nome do Acompanhante</Text>
-                  <TextInput
-                    style={styles.input}
-                    onChangeText={text => updateField("nomeAcompanhante", text)}
-                    value={form.nomeAcompanhante}
-                  />
-                </View>
+            <FormInput
+              label="E-mail"
+              value={form.emailVisitante}
+              onChangeText={text => updateField("emailVisitante", text)}
+              width="95%"
+            />
 
-                <View style={[styles.input_section, { width: "95%" }]}>
-                  <Text style={styles.label}>CPF do Acompanhante</Text>
-                  <TextInput
-                    style={styles.input}
-                    onChangeText={text => updateField("cpfAcompanhante", text)}
-                    value={form.cpfAcompanhante}
-                  />
-                </View>
-              </>
-            )}
+            <FormInput
+              label="Perfil"
+              value={form.perfilvisitante}
+              onChangeText={text => updateField("perfilvisitante", text)}
+              width="95%"
+            />
+
+            <FormInput
+              label="CPF"
+              value={form.cpf}
+              onChangeText={text => updateField("cpf", text)}
+              width="48%"
+            />
+
+            <FormInput
+              label="Telefone"
+              value={form.telefone}
+              onChangeText={text => updateField("telefone", text)}
+              width="48%"
+            />
+
+            <StatePickerField
+              label="Estado"
+              value={form.estado}
+              onChange={value => updateField("estado", value)}
+              width="48%"
+            />
+
+            <FormInput
+              label="Cidade"
+              value={form.cidade}
+              onChangeText={text => updateField("cidade", text)}
+              width="48%"
+            />
           </View>
 
+          <CompanionSection
+            hasCompanion={form.acompanhante}
+            companionName={form.nomeAcompanhante}
+            companionCpf={form.cpfAcompanhante}
+            onToggleCompanion={() => updateField("acompanhante", !form.acompanhante)}
+            onChangeCompanionName={text => updateField("nomeAcompanhante", text)}
+            onChangeCompanionCpf={text => updateField("cpfAcompanhante", text)}
+          />
         </ScrollView>
       </View>
     </View>
   );
 }
-
 
 const styles = StyleSheet.create({
   overlay: {
@@ -363,19 +224,16 @@ const styles = StyleSheet.create({
     zIndex: 2,
     maxHeight: "95%"
   },
-
   title: {
     fontSize: 16,
-    fontWeight: 700,
-    color: "404040"
+    fontWeight: "700",
+    color: "#404040"
   },
-
   topo: {
     display: "flex",
     flexDirection: "row",
     justifyContent: "space-between"
   },
-
   botoes: {
     display: "flex",
     flexDirection: "row",
@@ -383,47 +241,11 @@ const styles = StyleSheet.create({
     justifyContent: "space-around",
     width: "20%",
   },
-
   bloco_input: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
     gap: 8,
     marginTop: 25
-  },
-
-  input_section: {
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "space-between",
-    borderWidth: 1,
-    borderColor: "#E5E5E5",
-    borderRadius: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    marginBottom: 12,
-  },
-
-  label: {
-    color: "rgba(19, 26, 41, 0.48)",
-    fontSize: 12,
-  },
-
-  input: {
-    fontSize: 14,
-    paddingHorizontal: 0,
-  },
-
-  button_section: {
-    flexDirection: "row",
-    justifyContent: "flex-end"
-  },
-
-  button: {
-    borderWidth: 1,
-    borderColor: "#855EDE",
-    borderRadius: 20,
-    padding: 8
   }
-
-})
+});
