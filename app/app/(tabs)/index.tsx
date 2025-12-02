@@ -17,10 +17,13 @@ export type Tour = {
   id?: number;
   codigo: string;
   responsavel: string;
+  responsavel_id?: number | null;
   status: "scheduled" | "in_progress" | "paused" | "finished" | "cancelled";
   data: string;
   hora_inicio_prevista: string;
   hora_fim_prevista: string;
+  titulo?: string | null;
+  robo_id?: number;
 };
 
 const initialTours: Tour[] = [
@@ -176,10 +179,13 @@ function mapApiTourToUi(tour: ApiTour): Tour {
     id: tour.id,
     codigo: tour.codigo,
     responsavel: tour.responsavel_id ? `Responsável #${tour.responsavel_id}` : "Não informado",
+    responsavel_id: tour.responsavel_id,
     status: normalizeStatus(tour.status),
     data: formatApiDate(tour.data_local),
     hora_inicio_prevista: formatTime(tour.hora_inicio_prevista),
     hora_fim_prevista: formatTime(tour.hora_fim_prevista),
+    titulo: tour.titulo,
+    robo_id: tour.robo_id,
   };
 }
 
@@ -222,9 +228,10 @@ export default function HomeScreen() {
 
   function updateTour(updatedTour: Tour) {
     setTours(prev =>
-      prev.map(tour =>
-        tour.codigo === updatedTour.codigo ? updatedTour : tour
-      )
+      prev.map(tour => {
+        const same = updatedTour.id ? tour.id === updatedTour.id : tour.codigo === updatedTour.codigo;
+        return same ? { ...tour, ...updatedTour } : tour;
+      })
     );
   }
 

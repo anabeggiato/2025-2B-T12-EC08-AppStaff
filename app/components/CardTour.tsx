@@ -11,21 +11,28 @@ type CardTourProps = {
     id?: number;
     codigo: string;
     responsavel: string;
+    responsavel_id?: number | null;
     status: "scheduled" | "in_progress" | "paused" | "finished" | "cancelled";
     data: string;
     hora_inicio_prevista: string;
     hora_fim_prevista: string;
+    titulo?: string | null;
+    robo_id?: number;
     onUpdateTour?: (updatedTour: Tour) => void; // Callback para atualizar o tour
     onDelete?: () => void;
 };
 
 export default function CardTour({
+    id,
     codigo,
     responsavel,
+    responsavel_id,
     status,
     data,
     hora_inicio_prevista,
     hora_fim_prevista,
+    titulo,
+    robo_id,
     onUpdateTour,
     onDelete,
 }: CardTourProps) {
@@ -81,12 +88,16 @@ export default function CardTour({
     };
 
     const tourData: Tour = {
+        id,
         codigo,
         responsavel,
+        responsavel_id,
         status,
         data,
         hora_inicio_prevista,
         hora_fim_prevista,
+        titulo,
+        robo_id,
     };
 
     return (
