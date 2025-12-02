@@ -4,14 +4,18 @@ import Feather from '@expo/vector-icons/Feather'
 import MaterialIcons from '@expo/vector-icons/MaterialIcons'
 import PopUpInfosGerais from "@/components/PopUpInfosGerais";
 import PopUpCodigo from "@/components/PopUpCodigo";
+import { EditTourPopup } from "@/components/EditTourPopup";
+import type { Tour } from "@/app/(tabs)/index";
 
 type CardTourProps = {
     id?: number;
     codigo: string;
     responsavel: string;
     status: "scheduled" | "in_progress" | "paused" | "finished" | "cancelled";
+    data: string;
     hora_inicio_prevista: string;
     hora_fim_prevista: string;
+    onUpdateTour?: (updatedTour: Tour) => void; // Callback para atualizar o tour
     onDelete?: () => void;
 };
 
@@ -19,8 +23,10 @@ export default function CardTour({
     codigo,
     responsavel,
     status,
+    data,
     hora_inicio_prevista,
     hora_fim_prevista,
+    onUpdateTour,
     onDelete,
 }: CardTourProps) {
     const getStyle = () => {
@@ -38,29 +44,30 @@ export default function CardTour({
         }
     };
 
-     const [mostrarPopUpInfo, setMostrarPopUpInfo] = useState(false);
-    
-     const [mostrarPopUpCodigo, setMostrarPopUpCodigo] = useState(false);
+    const [mostrarPopUpInfo, setMostrarPopUpInfo] = useState(false);
+    const [mostrarPopUpCodigo, setMostrarPopUpCodigo] = useState(false);
+    const [mostrarEditPopup, setMostrarEditPopup] = useState(false);
 
-     function abrirPopUp() {
+    function abrirPopUp() {
         setMostrarPopUpInfo(true);
     }
-      
+
     function fecharPopUp() {
         setMostrarPopUpInfo(false);
     }
 
     const handleStartTour = () => {
-        setMostrarPopUpInfo(false); // Fecha PopUpInfosGerais
-        setMostrarPopUpCodigo(true);  // Abre PopUpCodigo
-        // Você pode remover o console.log("Tour iniciado!") daqui, pois o pop-up de código assume o fluxo.
+        setMostrarPopUpInfo(false);
+        setMostrarPopUpCodigo(true);
     };
-    
-    // Funções para PopUpCodigo
+
     const fecharPopUpCodigo = () => {
         setMostrarPopUpCodigo(false);
     }
 
+    const abrirEditPopup = () => {
+        setMostrarEditPopup(true);
+    }
 return (
         <View style={styles.card_container}>
             {/* PopUp de Informações Gerais (Primeiro Pop-up) */}
@@ -92,42 +99,112 @@ return (
                 </View>
             </View>
 
-            {/*INFOS RESPONSÁVEL E HORÁRIO */}
-            <View style={styles.infos}>
-                <View style={{ width: "50%" }}>
-                    <Text style={styles.label}>Staff</Text>
-                    <Text>{responsavel}</Text>
+    const fecharEditPopup = () => {
+        setMostrarEditPopup(false);
+    }
+
+    const handleUpdateTour = (updatedTour: Tour) => {
+        if (onUpdateTour) {
+            onUpdateTour(updatedTour);
+        }
+        fecharEditPopup();
+    }
+
+    // Objeto tour para passar ao EditTourPopup
+    const tourData: Tour = {
+        codigo,
+        responsavel,
+        status,
+        data,
+        hora_inicio_prevista,
+        hora_fim_prevista,
+    };
+
+    return (
+        <>
+            {/* PopUp de Edição - Renderizado fora do card */}
+            {mostrarEditPopup && (
+                <EditTourPopup
+                    tour={tourData}
+                    onClose={fecharEditPopup}
+                    updateTour={handleUpdateTour}
+                />
+            )}
+
+            <View style={styles.card_container}>
+                {/* PopUp de Informações Gerais */}
+                <PopUpInfosGerais
+                    visible={mostrarPopUpInfo}
+                    onClose={fecharPopUp}
+                    onConfirm={handleStartTour}
+                />
+
+                {/* PopUp de Código */}
+                <PopUpCodigo
+                    visible={mostrarPopUpCodigo}
+                    onClose={fecharPopUpCodigo}
+                    onConfirm={() => { }}
+                />
+
+                {/*PARTE SUPERIOR DO CARD*/}
+                <View style={styles.topo}>
+                    <Text style={styles.text}>Tour #{codigo}</Text>
+                    <View style={styles.botoes}>
+                        <Pressable onPress={abrirEditPopup}>
+                            <Feather name="edit-2" size={20} color="#9747FF" />
+                        </Pressable>
+
+                        <Pressable onPress={() => { Alert.alert("Delete") }}>
+                            <MaterialIcons name="close" size={20} color="black" />
+                        </Pressable>
+                    </View>
                 </View>
 
-                <View style={{ width: "50%" }}>
-                    <Text style={styles.label}>Horário</Text>
-                    <View style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 2 }}>
-                        <Text>{hora_inicio_prevista}</Text>
-                        <MaterialIcons name="arrow-right-alt" size={14} color="black" />
-                        <Text>{hora_fim_prevista}</Text>
+                {/*INFOS RESPONSÁVEL E HORÁRIO */}
+                <View style={styles.infos}>
+                    <View style={{ width: "50%" }}>
+                        <Text style={styles.label}>Staff</Text>
+                        <Text>{responsavel}</Text>
+                    </View>
+
+                    <View style={{ width: "50%" }}>
+                        <Text style={styles.label}>Horário</Text>
+                        <View style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 2 }}>
+                            <Text>{hora_inicio_prevista}</Text>
+                            <MaterialIcons name="arrow-right-alt" size={14} color="black" />
+                            <Text>{hora_fim_prevista}</Text>
+                        </View>
+                    </View>
+                </View>
+
+                {/*STATUS E BOTÃO*/}
+                <View style={styles.infos}>
+                    <View>
+                        <Text style={styles.label}>Status</Text>
+                        <Text style={[{ padding: 4, borderRadius: 2 }, getStyle()]}>
+                            {status === "scheduled" ? "A começar" :
+                                status === "in_progress" ? "Em progresso" :
+                                    status === "paused" ? "Tour em pausa" :
+                                        status === "cancelled" ? "Cancelado" :
+                                            "Finalizado"}
+                        </Text>
+                    </View>
+
+                    <View>
+                        {status === "finished" || status === "cancelled" ? (
+                            <></>) : (
+                            <Pressable style={styles.button} onPress={abrirPopUp}>
+                                <Text style={{ color: "#FFF", textAlign: "center" }}>
+                                    {status === "scheduled" ? "Começar tour" :
+                                        status === "in_progress" ? "Finalizar tour" :
+                                            "Retomar tour"}
+                                </Text>
+                            </Pressable>
+                        )}
                     </View>
                 </View>
             </View>
-
-            {/*STATUS E BOTÃO*/}
-            <View style={styles.infos}>
-                <View>
-                    <Text style={styles.label}>Status</Text>
-                    <Text style={[{ padding: 4, borderRadius: 2 }, getStyle()]}>{status === "scheduled" ? "A começar" : status === "in_progress" ? "Em progresso" : status === "paused" ? "Tour em pausa" : status === "cancelled" ? "Cancelado" : "Finalizado"}</Text>
-                </View>
-
-                <View>
-                    {status === "finished" || status === "cancelled" ? (
-                        <></>) : (
-                       <Pressable
-                        style={styles.button} onPress={abrirPopUp}>
-                        <Text style={{ color: "#FFF", textAlign: "center" }}>{status === "scheduled" ? "Começar tour" : status === "in_progress" ? "Finalizar tour" : "Retomar tour"}</Text>
-                        
-                        </Pressable>
-                    )}
-                </View>
-            </View>
-        </View >
+        </>
     )
 }
 
@@ -142,8 +219,8 @@ const styles = StyleSheet.create({
 
     text: {
         fontSize: 16,
-        fontWeight: 700,
-        color: "404040"
+        fontWeight: "700",
+        color: "#404040"
     },
 
     topo: {

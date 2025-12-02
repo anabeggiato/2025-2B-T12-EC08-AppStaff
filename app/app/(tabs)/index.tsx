@@ -167,7 +167,7 @@ function formatApiDate(apiDate: string) {
 function formatTime(value: string | null) {
   if (!value) return "--:--";
   const [hour, minute] = value.split(":");
-  const safeMinute = minute?.split(".")[0]; 
+  const safeMinute = minute?.split(".")[0];
   return `${hour?.padStart(2, "0") ?? "--"}:${safeMinute?.padStart(2, "0") ?? "--"}`;
 }
 
@@ -218,6 +218,14 @@ export default function HomeScreen() {
 
   function addTour(newTour: Tour) {
     setTours(prev => [...prev, newTour]);
+  }
+
+  function updateTour(updatedTour: Tour) {
+    setTours(prev =>
+      prev.map(tour =>
+        tour.codigo === updatedTour.codigo ? updatedTour : tour
+      )
+    );
   }
 
   const filteredTours = tours.filter(
@@ -275,6 +283,7 @@ export default function HomeScreen() {
           <CardTour
             key={tour.codigo}
             {...tour}
+            onUpdateTour={updateTour}
             onDelete={() => setDeleteTarget(tour)}
           />
         ))}
