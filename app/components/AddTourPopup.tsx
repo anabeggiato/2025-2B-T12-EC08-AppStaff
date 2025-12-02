@@ -54,15 +54,24 @@ export function AddTourPopup({ onClose, addTour }: Props) {
   function generateCode() {
     const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     const numbers = "0123456789";
-    let code = "";
+    const all = letters + numbers;
 
-    for (let i = 0; i < 4; i++) {
-      const randomLetter = letters[Math.floor(Math.random() * letters.length)];
-      const randomNumber = numbers[Math.floor(Math.random() * numbers.length)];
-      code += randomLetter + randomNumber;
+    // Garante pelo menos uma letra e um número, depois preenche o restante e embaralha.
+    const base = [
+      letters[Math.floor(Math.random() * letters.length)],
+      numbers[Math.floor(Math.random() * numbers.length)],
+    ];
+    while (base.length < 6) {
+      base.push(all[Math.floor(Math.random() * all.length)]);
     }
 
-    return code;
+    // Fisher–Yates simples para embaralhar
+    for (let i = base.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [base[i], base[j]] = [base[j], base[i]];
+    }
+
+    return base.join("");
   }
 
   useEffect(() => {

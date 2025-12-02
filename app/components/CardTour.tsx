@@ -74,7 +74,8 @@ return (
             <PopUpCodigo
                 visible={mostrarPopUpCodigo}
                 onClose={fecharPopUpCodigo}
-                onConfirm={() => {}}   
+                onConfirm={() => {}} 
+                codigo={codigo}  
             />
 
             {/*PARTE SUPERIOR DO CARD*/}

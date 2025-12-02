@@ -4,12 +4,10 @@ interface Props {
   visible: boolean;
   onClose: () => void;
   onConfirm: () => void;
+  codigo: string;
 }
-type codigo = {
-    codigo: string; 
-};
 
-export default function PopUpCodigo({ visible, onClose, onConfirm}: Props) {
+export default function PopUpCodigo({ visible, onClose, onConfirm, codigo }: Props) {
   return (
     <Modal visible={visible} transparent animationType="fade">
       <View style={styles.overlay}>
@@ -29,7 +27,7 @@ export default function PopUpCodigo({ visible, onClose, onConfirm}: Props) {
           </Text>
 
           <View style={styles.codeBox}>
-            <Text style={styles.codeText}>{6459}</Text>
+            <Text style={styles.codeText}>{codigo || "--"}</Text>
           </View>
 
           <Text style={styles.text}>

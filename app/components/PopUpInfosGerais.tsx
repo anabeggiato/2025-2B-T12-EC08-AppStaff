@@ -1,6 +1,4 @@
 import { View, Text, TouchableOpacity, StyleSheet, Modal, Image} from "react-native";
-import PopUpCodigo from "@/components/PopUpCodigo";
-
 
 interface Props{
     visible: boolean;
