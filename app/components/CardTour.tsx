@@ -67,50 +67,19 @@ export default function CardTour({
 
     const abrirEditPopup = () => {
         setMostrarEditPopup(true);
-    }
-return (
-        <View style={styles.card_container}>
-            {/* PopUp de Informações Gerais (Primeiro Pop-up) */}
-            <PopUpInfosGerais
-                visible={mostrarPopUpInfo}
-                onClose={fecharPopUp}
-                // onConfirm agora chama a função de transição
-                onConfirm={handleStartTour} 
-            />
-
-            <PopUpCodigo
-                visible={mostrarPopUpCodigo}
-                onClose={fecharPopUpCodigo}
-                onConfirm={() => {}} 
-                codigo={codigo}  
-            />
-
-            {/*PARTE SUPERIOR DO CARD*/}
-            <View style={styles.topo}>
-                <Text style={styles.text}>Tour #{codigo}</Text>
-                <View style={styles.botoes}>
-                    <Pressable onPress={() => { Alert.alert("Edit") }}>
-                        <Feather name="edit-2" size={20} color="#9747FF" />
-                    </Pressable>
-
-                    <Pressable onPress={onDelete}>
-                        <MaterialIcons name="close" size={20} color="black" />
-                    </Pressable>
-                </View>
-            </View>
+    };
 
     const fecharEditPopup = () => {
         setMostrarEditPopup(false);
-    }
+    };
 
     const handleUpdateTour = (updatedTour: Tour) => {
         if (onUpdateTour) {
             onUpdateTour(updatedTour);
         }
         fecharEditPopup();
-    }
+    };
 
-    // Objeto tour para passar ao EditTourPopup
     const tourData: Tour = {
         codigo,
         responsavel,
@@ -122,7 +91,6 @@ return (
 
     return (
         <>
-            {/* PopUp de Edição - Renderizado fora do card */}
             {mostrarEditPopup && (
                 <EditTourPopup
                     tour={tourData}
@@ -132,21 +100,19 @@ return (
             )}
 
             <View style={styles.card_container}>
-                {/* PopUp de Informações Gerais */}
                 <PopUpInfosGerais
                     visible={mostrarPopUpInfo}
                     onClose={fecharPopUp}
                     onConfirm={handleStartTour}
                 />
 
-                {/* PopUp de Código */}
                 <PopUpCodigo
                     visible={mostrarPopUpCodigo}
                     onClose={fecharPopUpCodigo}
                     onConfirm={() => { }}
+                    codigo={codigo}
                 />
 
-                {/*PARTE SUPERIOR DO CARD*/}
                 <View style={styles.topo}>
                     <Text style={styles.text}>Tour #{codigo}</Text>
                     <View style={styles.botoes}>
@@ -154,13 +120,12 @@ return (
                             <Feather name="edit-2" size={20} color="#9747FF" />
                         </Pressable>
 
-                        <Pressable onPress={() => { Alert.alert("Delete") }}>
+                        <Pressable onPress={onDelete}>
                             <MaterialIcons name="close" size={20} color="black" />
                         </Pressable>
                     </View>
                 </View>
 
-                {/*INFOS RESPONSÁVEL E HORÁRIO */}
                 <View style={styles.infos}>
                     <View style={{ width: "50%" }}>
                         <Text style={styles.label}>Staff</Text>
@@ -177,7 +142,6 @@ return (
                     </View>
                 </View>
 
-                {/*STATUS E BOTÃO*/}
                 <View style={styles.infos}>
                     <View>
                         <Text style={styles.label}>Status</Text>
@@ -205,7 +169,7 @@ return (
                 </View>
             </View>
         </>
-    )
+    );
 }
 
 const styles = StyleSheet.create({
