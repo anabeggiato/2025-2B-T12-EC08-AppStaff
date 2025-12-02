@@ -8,6 +8,7 @@ import { EditTourPopup } from "@/components/EditTourPopup";
 import type { Tour } from "@/app/(tabs)/index";
 
 type CardTourProps = {
+    id?: number;
     codigo: string;
     responsavel: string;
     status: "scheduled" | "in_progress" | "paused" | "finished" | "cancelled";
@@ -15,6 +16,7 @@ type CardTourProps = {
     hora_inicio_prevista: string;
     hora_fim_prevista: string;
     onUpdateTour?: (updatedTour: Tour) => void; // Callback para atualizar o tour
+    onDelete?: () => void;
 };
 
 export default function CardTour({
@@ -25,6 +27,7 @@ export default function CardTour({
     hora_inicio_prevista,
     hora_fim_prevista,
     onUpdateTour,
+    onDelete,
 }: CardTourProps) {
     const getStyle = () => {
         switch (status) {
@@ -65,6 +68,35 @@ export default function CardTour({
     const abrirEditPopup = () => {
         setMostrarEditPopup(true);
     }
+return (
+        <View style={styles.card_container}>
+            {/* PopUp de Informações Gerais (Primeiro Pop-up) */}
+            <PopUpInfosGerais
+                visible={mostrarPopUpInfo}
+                onClose={fecharPopUp}
+                // onConfirm agora chama a função de transição
+                onConfirm={handleStartTour} 
+            />
+
+            <PopUpCodigo
+                visible={mostrarPopUpCodigo}
+                onClose={fecharPopUpCodigo}
+                onConfirm={() => {}}   
+            />
+
+            {/*PARTE SUPERIOR DO CARD*/}
+            <View style={styles.topo}>
+                <Text style={styles.text}>Tour #{codigo}</Text>
+                <View style={styles.botoes}>
+                    <Pressable onPress={() => { Alert.alert("Edit") }}>
+                        <Feather name="edit-2" size={20} color="#9747FF" />
+                    </Pressable>
+
+                    <Pressable onPress={onDelete}>
+                        <MaterialIcons name="close" size={20} color="black" />
+                    </Pressable>
+                </View>
+            </View>
 
     const fecharEditPopup = () => {
         setMostrarEditPopup(false);

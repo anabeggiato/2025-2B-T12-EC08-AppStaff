@@ -2,6 +2,7 @@ import { View, StyleSheet, Platform, UIManager, ScrollView, Text } from "react-n
 import { Navbar } from "@/components/navbar";
 import { Header } from "@/components/header";
 import CardTour from "@/components/CardTour";
+import { ConfirmDeleteModal } from "@/components/ConfirmDeleteModal";
 import DateSelector from "@/components/DateSelector";
 import { AddTourIcon } from "@/components/AddTourIcon";
 import { useEffect, useState } from "react";
@@ -13,6 +14,7 @@ if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental
 }
 
 export type Tour = {
+  id?: number;
   codigo: string;
   responsavel: string;
   status: "scheduled" | "in_progress" | "paused" | "finished" | "cancelled";
@@ -171,6 +173,7 @@ function formatTime(value: string | null) {
 
 function mapApiTourToUi(tour: ApiTour): Tour {
   return {
+    id: tour.id,
     codigo: tour.codigo,
     responsavel: tour.responsavel_id ? `Responsável #${tour.responsavel_id}` : "Não informado",
     status: normalizeStatus(tour.status),
@@ -186,6 +189,8 @@ export default function HomeScreen() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Tour | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   function formatDate(date: Date) {
     return date.toLocaleDateString("pt-BR");
@@ -227,6 +232,23 @@ export default function HomeScreen() {
     tour => tour.data === formatDate(selectedDate)
   );
 
+  async function confirmDelete() {
+    if (!deleteTarget) return;
+    setIsDeleting(true);
+    try {
+      if (deleteTarget.id) {
+        await tourService.remove(deleteTarget.id);
+      }
+      setTours(prev => prev.filter(t => (deleteTarget.id ? t.id !== deleteTarget.id : t.codigo !== deleteTarget.codigo)));
+    } catch (err) {
+      console.error("Erro ao deletar tour", err);
+      setError("Não foi possível deletar o tour.");
+    } finally {
+      setIsDeleting(false);
+      setDeleteTarget(null);
+    }
+  }
+
   return (
     <View style={styles.container}>
       <Header />
@@ -262,11 +284,19 @@ export default function HomeScreen() {
             key={tour.codigo}
             {...tour}
             onUpdateTour={updateTour}
+            onDelete={() => setDeleteTarget(tour)}
           />
         ))}
       </ScrollView>
 
       <AddTourIcon onOpen={() => setOpenPopup(true)} />
+      <ConfirmDeleteModal
+        visible={!!deleteTarget}
+        tourLabel={deleteTarget?.codigo}
+        isDeleting={isDeleting}
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+      />
       <Navbar />
     </View>
   );

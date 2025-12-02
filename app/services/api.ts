@@ -351,7 +351,7 @@ export interface TourVisitante {
   id?: number;
   tour_id: number;
   visitante_id: number;
-  adicionado_por: number | null;
+  adicionado_por?: number | null;
   adicionado_em?: string;
 }
 
@@ -415,5 +415,11 @@ export const visitanteService = {
     return response.data;
   },
 };
+
+export interface Usuario {
+  id?: number;
+  nome: string;
+  email: string;
+}
 
 export default api;
