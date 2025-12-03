@@ -2,8 +2,11 @@ import { View, StyleSheet, Text } from "react-native";
 import { Header } from "@/components/header";
 import { Navbar } from "@/components/navbar";
 import { MenuItem } from "@/components/MenuItem";
+import { useRouter } from "expo-router";
 
 export default function MenuScreen() {
+  const router = useRouter();
+
   return (
     <View style={styles.container}>
       <Header />
@@ -14,7 +17,11 @@ export default function MenuScreen() {
         <View style={styles.menuList}>
           <MenuItem label="Perfil" icon="user" showChevron />
           <MenuItem label="Configurações" icon="settings" showChevron />
-          <MenuItem label="Sair" icon="log-out" />
+          <MenuItem
+            label="Sair"
+            icon="log-out"
+            onPress={() => router.replace("/login")}
+          />
         </View>
       </View>
 
