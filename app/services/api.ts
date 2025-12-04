@@ -307,6 +307,10 @@ export const tourService = {
     const response = await api.delete<ApiResponse<{ message: string }>>(`/tour/${id}`);
     return response.data;
   },
+  tourNow: async(id:number) =>{
+    if(id === 1) return true;
+    return false;
+  }
 };
 
 // --- Tour status log ---
@@ -421,5 +425,4 @@ export interface Usuario {
   nome: string;
   email: string;
 }
-
 export default api;
