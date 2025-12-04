@@ -24,11 +24,11 @@ const mockUsuarios: Usuario[] = [
 export function EditTourPopup({ onClose, updateTour, tour }: Props) {
   const [form, setForm] = useState({
     roboId: "",
-    titulo: "",
+    titulo: tour?.titulo ?? "",
     data: new Date(),
-    horaInicioPrevista: "",
-    horaFimPrevista: "",
-    status: "scheduled" as Tour["status"],
+    horaInicioPrevista: tour?.hora_inicio_prevista ?? "",
+    horaFimPrevista: tour?.hora_fim_prevista ?? "",
+    status: (tour?.status as Tour["status"]) ?? "scheduled",
     nomeVisitante: "",
     emailVisitante: "",
     perfilvisitante: "",
@@ -46,43 +46,121 @@ export function EditTourPopup({ onClose, updateTour, tour }: Props) {
   const [showResponsavelList, setShowResponsavelList] = useState(false);
   const [loadingUsuarios, setLoadingUsuarios] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoadingData, setIsLoadingData] = useState(false);
+  const [initialForm, setInitialForm] = useState<typeof form | null>(null);
+  const [hasChanges, setHasChanges] = useState(false);
+  const [visitanteId, setVisitanteId] = useState<number | null>(null);
 
-  // Preencher o formulário com os dados do tour selecionado
+  function parseDate(value: string | Date | null | undefined) {
+    if (!value) return new Date();
+    if (value instanceof Date) return value;
+    // suporta formatos "dd/mm/yyyy" e "yyyy-mm-dd"
+    if (value.includes("/")) {
+      const [day, month, year] = value.split("/");
+      return new Date(parseInt(year, 10), parseInt(month, 10) - 1, parseInt(day, 10));
+    }
+    const [year, month, day] = value.split("-"); // "2025-11-17"
+    return new Date(parseInt(year, 10), parseInt(month, 10) - 1, parseInt(day, 10));
+  }
+
+  function formatHora(value: string | null) {
+    if (!value) return "";
+    const [h, m] = value.split(":");
+    return `${h?.padStart(2, "0") ?? ""}:${m?.split(".")[0]?.padStart(2, "0") ?? ""}`;
+  }
+
+  // Preencher o formulário com os dados reais do tour e visitante
   useEffect(() => {
-    if (tour) {
-      // Converter a data de string para Date
-      const parseDate = (dateStr: string | Date) => {
-        if (dateStr instanceof Date) return dateStr;
-        const [day, month, year] = dateStr.split('/');
-        return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-      };
+    async function hydrateData() {
+      if (!tour?.id) {
+        // Sem id, usamos os dados que já vieram no card
+        const baseForm = {
+          roboId: tour?.robo_id ? String(tour.robo_id) : "",
+          titulo: tour?.titulo ?? "",
+          data: parseDate(tour?.data),
+          horaInicioPrevista: tour?.hora_inicio_prevista ?? "",
+          horaFimPrevista: tour?.hora_fim_prevista ?? "",
+          status: tour?.status ?? "scheduled",
+          nomeVisitante: "",
+          emailVisitante: "",
+          perfilvisitante: "",
+          estado: "",
+          cpf: "",
+          telefone: "",
+          cidade: "",
+          acompanhante: false,
+          nomeAcompanhante: "",
+          cpfAcompanhante: "",
+        };
+        setForm(baseForm);
+        setInitialForm(baseForm);
+        return;
+      }
 
-      setForm({
-        roboId: "",
-        titulo: "",
-        data: parseDate(tour.data),
-        horaInicioPrevista: tour.hora_inicio_prevista || "",
-        horaFimPrevista: tour.hora_fim_prevista || "",
-        status: tour.status || "scheduled",
-        nomeVisitante: "",
-        emailVisitante: "",
-        perfilvisitante: "",
-        estado: "",
-        cpf: "",
-        telefone: "",
-        cidade: "",
-        acompanhante: false,
-        nomeAcompanhante: "",
-        cpfAcompanhante: "",
-      });
+      setIsLoadingData(true);
+      try {
+        const [tourResp, visitRelResp] = await Promise.all([
+          tourService.getById(tour.id),
+          tourVisitanteService.listByTour(tour.id),
+        ]);
 
-      // Encontrar o responsável no mock de usuários
-      const responsavel = mockUsuarios.find(u => u.nome === tour.responsavel);
-      if (responsavel) {
-        setResponsavelSelecionado({ id: responsavel.id as number, nome: responsavel.nome });
+        const visitanteId = visitRelResp.data[0]?.visitante_id;
+        const visitanteResp = visitanteId ? await visitanteService.getById(visitanteId) : null;
+        if (visitanteId) setVisitanteId(visitanteId);
+
+        const baseForm = {
+          roboId: tourResp.data.robo_id?.toString() ?? "",
+          titulo: tourResp.data.titulo ?? "",
+          data: parseDate(tourResp.data.data_local ?? tour.data),
+          horaInicioPrevista: formatHora(tourResp.data.hora_inicio_prevista) || "",
+          horaFimPrevista: formatHora(tourResp.data.hora_fim_prevista) || "",
+          status: tourResp.data.status ?? "scheduled",
+          nomeVisitante: visitanteResp?.data.nome ?? "",
+          emailVisitante: visitanteResp?.data.email ?? "",
+          perfilvisitante: "",
+          estado: "",
+          cpf: "",
+          telefone: visitanteResp?.data.telefone ?? "",
+          cidade: "",
+          acompanhante: false,
+          nomeAcompanhante: "",
+          cpfAcompanhante: "",
+        };
+
+        setForm(baseForm);
+        setInitialForm(baseForm);
+
+        const respId = tourResp.data.responsavel_id ?? tour.responsavel_id;
+        if (respId) {
+          setResponsavelSelecionado({ id: respId, nome: `Responsável #${respId}` });
+        } else {
+          const mockResp = mockUsuarios.find(u => u.nome === tour.responsavel);
+          if (mockResp) {
+            setResponsavelSelecionado({ id: mockResp.id as number, nome: mockResp.nome });
+          }
+        }
+      } catch (error) {
+        console.error("Erro ao carregar dados do tour para edição", error);
+        Alert.alert("Erro", "Não foi possível carregar os dados do tour.");
+      } finally {
+        setIsLoadingData(false);
       }
     }
+
+    hydrateData();
   }, [tour]);
+
+  // Detecta alterações para habilitar/desabilitar o botão de salvar
+  useEffect(() => {
+    if (!initialForm) return;
+    const normalize = (value: any) => {
+      if (value instanceof Date) return value.toISOString();
+      return value ?? "";
+    };
+
+    const changed = Object.keys(initialForm).some(key => normalize((form as any)[key]) !== normalize((initialForm as any)[key]));
+    setHasChanges(changed);
+  }, [form, initialForm]);
 
   function updateField(field: string, value: any) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -115,6 +193,11 @@ export function EditTourPopup({ onClose, updateTour, tour }: Props) {
   async function handleSubmit() {
     if (isSubmitting) return;
 
+    if (!tour?.id) {
+      Alert.alert("Erro", "Não foi possível identificar o tour para editar.");
+      return;
+    }
+
     if (!form.nomeVisitante || !form.emailVisitante || !form.telefone) {
       Alert.alert("Campos obrigatórios", "Preencha nome, email e telefone do visitante.");
       return;
@@ -125,7 +208,7 @@ export function EditTourPopup({ onClose, updateTour, tour }: Props) {
       return;
     }
 
-    if (!responsavelSelecionado) {
+    if (!responsavelSelecionado && !tour.responsavel_id) {
       Alert.alert("Responsável", "Selecione um responsável para o tour.");
       return;
     }
@@ -133,19 +216,46 @@ export function EditTourPopup({ onClose, updateTour, tour }: Props) {
     setIsSubmitting(true);
 
     try {
-      // Aqui você faria a chamada de UPDATE na API
-      // Por enquanto, vamos apenas atualizar localmente
-      
-      const updatedTour: Tour = {
+      if (visitanteId) {
+        await visitanteService.update(visitanteId, {
+          nome: form.nomeVisitante,
+          email: form.emailVisitante,
+          telefone: form.telefone,
+        });
+      }
+
+      const payload = {
         codigo: tour.codigo,
-        responsavel: responsavelSelecionado?.nome ?? tour.responsavel,
+        data_local: toIsoDate(form.data),
+        hora_inicio_prevista: timeWithSeconds(form.horaInicioPrevista),
+        hora_fim_prevista: timeWithSeconds(form.horaFimPrevista),
+        responsavel_id: responsavelSelecionado?.id ?? tour.responsavel_id ?? null,
+        robo_id: form.roboId ? Number(form.roboId) : tour.robo_id ?? 1,
         status: normalizeStatusInput(form.status),
+        titulo: form.titulo || tour.titulo || "Tour",
+        inicio_real: null,
+        fim_real: null,
+      };
+
+      const resp = await tourService.update(tour.id, payload as any);
+      const apiTour = resp.data;
+
+      const updatedTour: Tour = {
+        id: apiTour.id ?? tour.id,
+        codigo: apiTour.codigo ?? tour.codigo,
+        responsavel: responsavelSelecionado?.nome ?? `Responsável #${apiTour.responsavel_id ?? tour.responsavel_id ?? ""}`,
+        responsavel_id: apiTour.responsavel_id ?? tour.responsavel_id,
+        status: normalizeStatusInput(apiTour.status),
         data: form.data.toLocaleDateString("pt-BR"),
-        hora_inicio_prevista: form.horaInicioPrevista,
-        hora_fim_prevista: form.horaFimPrevista,
+        hora_inicio_prevista: formatHora(apiTour.hora_inicio_prevista) || form.horaInicioPrevista,
+        hora_fim_prevista: formatHora(apiTour.hora_fim_prevista) || form.horaFimPrevista,
+        titulo: apiTour.titulo ?? tour.titulo,
+        robo_id: apiTour.robo_id ?? tour.robo_id,
       };
 
       updateTour(updatedTour);
+      setInitialForm(form);
+      setHasChanges(false);
       onClose();
     } catch (error) {
       console.error(error);
@@ -282,12 +392,15 @@ export function EditTourPopup({ onClose, updateTour, tour }: Props) {
           {/* Botão de Editar */}
           <View style={styles.buttonContainer}>
             <Pressable 
-              style={[styles.editButton, isSubmitting && styles.editButtonDisabled]} 
+              style={[
+                styles.editButton,
+                (!hasChanges || isSubmitting || isLoadingData) && styles.editButtonDisabled
+              ]} 
               onPress={handleSubmit}
-              disabled={isSubmitting}
+              disabled={!hasChanges || isSubmitting || isLoadingData}
             >
               <Text style={styles.editButtonText}>
-                {isSubmitting ? "Salvando..." : "Editar tour"}
+                {isSubmitting ? "Salvando..." : isLoadingData ? "Carregando..." : "Editar tour"}
               </Text>
             </Pressable>
           </View>
