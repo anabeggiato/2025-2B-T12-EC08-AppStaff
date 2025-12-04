@@ -206,82 +206,64 @@ export default function MapScreen() {
   return (
     <View style={styles.container}>
       <Header />
-      <DateSelector onDateChange={setSelectedDate} />
 
       <ScrollView
-        horizontal={true}
-        style={styles.tours}
-        contentContainerStyle={{ gap: 8, paddingVertical: 10 }}
-        showsHorizontalScrollIndicator={false}
-      >
-        {filteredTours.map((tour) => {
-          const color = getStatusColor(tour.status);
-
-          return (
-            <View key={tour.codigo} style={[styles.tour, { borderColor: color, },]}>
-              <View style={{ width: 6, height: 6, borderRadius: 50, backgroundColor: color, }} />
-
-              <Text style={{ color: "white" }}>
-                {tour.hora_inicio_prevista}
-                <MaterialIcons name="arrow-right-alt" size={14} color="white" />
-                {tour.hora_fim_prevista}
-              </Text>
-            </View>
-          );
-        })}
-      </ScrollView>
-
-      <View style={styles.status_atual}>
-        {tourAtual ? (
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-            {/* bolinha de status */}
-            <View
-              style={{
-                width: 12,
-                height: 12,
-                borderRadius: 50,
-                backgroundColor:
-                  tourAtual.status === "in_progress"
-                    ? "#FFBB00"
-                    : tourAtual.status === "finished"
-                      ? "#4CAF50"
-                      : "#0096FF"
-              }}
-            />
-
-            {/* texto */}
-            <Text style={{ color: "#FFF" }}>
-              {tourAtual.status === "in_progress" &&
-                `Tour #${tourAtual.codigo} em andamento`}
-
-              {tourAtual.status === "finished" &&
-                `Tour #${tourAtual.codigo} finalizado`}
-
-              {tourAtual.status === "scheduled" &&
-                `Próximo tour (#${tourAtual.codigo}) agendado`}
-            </Text>
-          </View>
-        ) : (
-          <Text style={{ color: "#FFF" }}>
-            Nenhum tour encontrado para esta data.
-          </Text>
-        )}
-      </View>
-
-      <View style={{ marginVertical: 25, width: "95%", alignItems: 'center' }}>
-        <Image source={require("@/assets/images/mapa.png")} width={35} height={20} />
-      </View>
-
-
-      <Text style={styles.text}>Perguntas Feitas</Text>
-      <ScrollView
-        style={{ width: "100%", marginVertical: 20, gap: 16, maxHeight: 180 }}
+        style={{ width: "100%", marginTop: 150, gap: 16 }}
         contentContainerStyle={{ flexDirection: "column", gap: 8, justifyContent: "center", alignItems: "center" }}
         showsVerticalScrollIndicator={false}
       >
-        <Pergunta pergunta={"Qual o melhor curso do Inteli?"} local={"Auditório"} resposta={'Todos os cursos do Inteli possuem a mesma metodologia baseada em projetos. Mas se fosse para escolher um. Hmmm... Engenharia da Computação!'} />
-        <Pergunta pergunta={"Por quê as mesas são em grupo?"} local={"Ateliê"} resposta={'Porque aqui usamos uma metodologia baseada em projetos, e os alunos trabalham em grupos o tempo todo para que possam compartilhar seus conhecimento e experiêcnias'} />
-        <Pergunta pergunta={"Qual é o perfil do aluno Inteli?"} local={"Ateliê"} resposta={'O aluno do Inteli é caracterizado por ser curioso, resiliente e apaixonado por tecnologia, com interesse em negócios e liderança.'} />
+        <View style={{ width: '100%', alignItems: 'center', justifyContent: 'center' }}>
+          <View style={styles.status_atual}>
+            {tourAtual ? (
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                {/* bolinha de status */}
+                <View
+                  style={{
+                    width: 12,
+                    height: 12,
+                    borderRadius: 50,
+                    backgroundColor:
+                      tourAtual.status === "in_progress"
+                        ? "#FFBB00"
+                        : tourAtual.status === "finished"
+                          ? "#4CAF50"
+                          : "#0096FF"
+                  }}
+                />
+
+                {/* texto */}
+                <Text style={{ color: "#FFF" }}>
+                  {tourAtual.status === "in_progress" &&
+                    `Tour #${tourAtual.codigo} em andamento`}
+
+                  {tourAtual.status === "finished" &&
+                    `Tour #${tourAtual.codigo} finalizado`}
+
+                  {tourAtual.status === "scheduled" &&
+                    `Próximo tour (#${tourAtual.codigo}) agendado`}
+                </Text>
+              </View>
+            ) : (
+              <Text style={{ color: "#FFF" }}>
+                Nenhum tour encontrado para esta data.
+              </Text>
+            )}
+          </View>
+
+          <View style={{ marginVertical: 25, width: "95%", alignItems: 'center' }}>
+            <Image source={require("@/assets/images/mapa.png")} width={35} height={20} />
+          </View>
+
+
+          <Text style={[styles.text]}>Perguntas Feitas</Text>
+          <View style={{width: '100%', justifyContent: "center", alignItems: "center", gap: 4}}>
+            <Pergunta pergunta={"Qual o melhor curso do Inteli?"} local={"Auditório"} resposta={'Todos os cursos do Inteli possuem a mesma metodologia baseada em projetos. Mas se fosse para escolher um. Hmmm... Engenharia da Computação!'} />
+            <Pergunta pergunta={"Por quê as mesas são em grupo?"} local={"Ateliê"} resposta={'Porque aqui usamos uma metodologia baseada em projetos, e os alunos trabalham em grupos o tempo todo para que possam compartilhar seus conhecimento e experiêcnias'} />
+            <Pergunta pergunta={"Qual é o perfil do aluno Inteli?"} local={"Ateliê"} resposta={'O aluno do Inteli é caracterizado por ser curioso, resiliente e apaixonado por tecnologia, com interesse em negócios e liderança.'} />
+
+          </View>
+        </View>
+
       </ScrollView>
 
       <Navbar />
@@ -297,12 +279,6 @@ const styles = StyleSheet.create({
     paddingTop: 64,
     justifyContent: "center",
     alignItems: "center",
-  },
-
-  tours: {
-    width: "92%",
-    maxHeight: 60,
-    marginTop: 90,
   },
 
   tour: {
@@ -321,7 +297,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#402A78",
     borderRadius: 8,
-    width: "92%",
     paddingVertical: 18,
     alignItems: "center",
     marginVertical: 12
