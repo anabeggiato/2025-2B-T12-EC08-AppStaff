@@ -15,8 +15,8 @@ export interface ApiResponse<T> {
 }
 
 // --- Alertas ---
-export type AlertaNivel = 'info' | 'warning' | 'emergency';
-export type AlertaOrigem = 'visitor' | 'robot' | 'manager';
+export type AlertaNivel = 'Baixo' | 'Medio' | 'Alto';
+export type AlertaOrigem =  'visitor' | 'robot' | 'manager' | null;
 
 export interface Alerta {
   id?: number;
@@ -320,7 +320,7 @@ export const tourService = {
     return 2;
   },
   tourNow: async(id:number) =>{
-    if(id === 1) return true;
+    if(id === 2) return true;
     return false;
   }
 };

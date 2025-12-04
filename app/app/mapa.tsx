@@ -1,4 +1,4 @@
-import { View, StyleSheet, Platform, UIManager, Text, ScrollView } from "react-native"
+import { View, StyleSheet, Platform, UIManager, Text, ScrollView, Alert } from "react-native"
 import { Navbar } from "@/components/navbar";
 import { Header } from "@/components/header";
 import { useState, useEffect } from 'react'
@@ -162,7 +162,10 @@ export default function MapScreen() {
       </ScrollView>
 
       {alert && (
-        <AlertPopup />
+        <AlertPopup
+          onClose={() => setAlert(false)}
+          tourId={tourId}
+        />
       )}
 
       {isNow && (
