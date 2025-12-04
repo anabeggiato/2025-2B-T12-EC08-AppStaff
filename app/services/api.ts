@@ -148,6 +148,10 @@ export const perguntasService = {
     const response = await api.get<ApiResponse<Pergunta[]>>('/perguntas');
     return response.data;
   },
+  listByTour: async (tourId: number) => {
+    const response = await api.get<ApiResponse<Pergunta[]>>(`/perguntas/tour/${tourId}`);
+    return response.data;
+  },
   create: async (data: Omit<Pergunta, 'id' | 'criado_em'>) => {
     const response = await api.post<ApiResponse<Pergunta>>('/perguntas', data);
     return response.data;
@@ -181,6 +185,10 @@ export interface Resposta {
 export const respostasService = {
   list: async () => {
     const response = await api.get<ApiResponse<Resposta[]>>('/respostas');
+    return response.data;
+  },
+  listByPergunta: async (perguntaId: number) => {
+    const response = await api.get<ApiResponse<Resposta[]>>(`/respostas/pergunta/${perguntaId}`);
     return response.data;
   },
   create: async (data: Omit<Resposta, 'id' | 'criado_em'>) => {
@@ -306,6 +314,10 @@ export const tourService = {
   remove: async (id: number) => {
     const response = await api.delete<ApiResponse<{ message: string }>>(`/tour/${id}`);
     return response.data;
+  },
+  // Mock helper enquanto a rota real não existe
+  tourMock: async () => {
+    return 2;
   },
   tourNow: async(id:number) =>{
     if(id === 1) return true;
