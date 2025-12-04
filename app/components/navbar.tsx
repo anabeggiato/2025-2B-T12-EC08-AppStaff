@@ -29,13 +29,6 @@ export function Navbar() {
                 </View>
             </Pressable>
 
-            <Pressable onPress={() => handlePress("/alerta")}>
-                <View style={[styles.item, isActive("/alerta") && styles.itemActive]}>
-                    <AntDesign name="alert" size={20} color="#FFF" />
-                    {isActive("/alerta") && <Text style={styles.text}>Alerta</Text>}
-                </View>
-            </Pressable>
-
             <Pressable onPress={() => handlePress("/menu")}>
                 <View style={[styles.item, isActive("/menu") && styles.itemActive]}>
                     <Octicons name="three-bars" size={22} color="#FFF" />
