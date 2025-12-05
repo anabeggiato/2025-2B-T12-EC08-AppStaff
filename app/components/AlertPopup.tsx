@@ -55,7 +55,7 @@ export default function AlertPopup({ onClose, tourId }: Props) {
       await alertasService.create({
         tour_id: tourId,
         origem: 'manager',
-        nivel: 'Medio',
+        nivel: 'medio',
         mensagem: 'Alerta enviado pelo app do staff',
         autor_usuario_id: 2,
         resolvido_em: null,

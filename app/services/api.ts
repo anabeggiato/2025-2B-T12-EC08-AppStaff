@@ -15,7 +15,7 @@ export interface ApiResponse<T> {
 }
 
 // --- Alertas ---
-export type AlertaNivel = 'Baixo' | 'Medio' | 'Alto';
+export type AlertaNivel = 'Baixo' | 'medio' | 'Alto';
 export type AlertaOrigem =  'visitor' | 'robot' | 'manager' | null;
 
 export interface Alerta {
@@ -317,10 +317,10 @@ export const tourService = {
   },
   // Mock helper enquanto a rota real não existe
   tourMock: async () => {
-    return 2;
+    return 27;
   },
   tourNow: async(id:number) =>{
-    if(id === 2) return true;
+    if(id === 27) return true;
     return false;
   }
 };

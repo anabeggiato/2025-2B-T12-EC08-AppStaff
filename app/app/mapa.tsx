@@ -1,7 +1,7 @@
-import { View, StyleSheet, Platform, UIManager, Text, ScrollView, Alert } from "react-native"
+import { View, StyleSheet, Platform, UIManager, Text, ScrollView, Pressable } from "react-native"
 import { Navbar } from "@/components/navbar";
 import { Header } from "@/components/header";
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Pergunta } from "@/components/Pergunta";
 import Checkpoint from "@/components/Checkpoint";
 import {
@@ -13,6 +13,7 @@ import {
 } from "@/services/api";
 import { AlertButton } from "@/components/AlertButton";
 import AlertPopup from "@/components/AlertPopup";
+import { Ionicons } from "@expo/vector-icons";
 
 
 if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -37,75 +38,85 @@ export default function MapScreen() {
     { id: number | undefined; pergunta: string; local: string; resposta: string }[]
   >([]);
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [alert, setAlert] = useState(false);
 
-  useEffect(() => {
-    async function fetchData() {
+  const fetchData = useCallback(async (isRefresh = false) => {
+    if (isRefresh) {
+      setRefreshing(true);
+    } else {
       setLoading(true);
-      setError(null);
+    }
+    setError(null);
 
-      try {
-        const mockId = await tourService.tourMock();
-        const id = typeof mockId === "number" ? mockId : (mockId as any)?.data ?? null;
-        setTourId(id);
+    try {
+      const mockId = await tourService.tourMock();
+      const id = typeof mockId === "number" ? mockId : (mockId as any)?.data ?? null;
+      setTourId(id);
 
-        if (!id) {
-          setError("Nenhum tour selecionado.");
-          setIsNow(false);
-          return;
-        }
-
-        const [hasTourNow, perguntasResp, checkpointResp] = await Promise.all([
-          tourService.getById(id),
-          perguntasService.listByTour(id),
-          checkpointService.listByTour(id),
-        ]);
-
-        setIsNow(hasTourNow);
-
-        const checkpointMap = new Map<number, ApiCheckpoint["tipo"]>();
-        (checkpointResp.data ?? []).forEach((cp) => {
-          if (cp.id != null) {
-            checkpointMap.set(cp.id, cp.tipo);
-          }
-        });
-
-        const perguntasComRespostas = await Promise.all(
-          (perguntasResp.data ?? []).map(async (pergunta) => {
-            let respostaTexto = "Sem resposta ainda.";
-            try {
-              if (pergunta.id != null) {
-                const respostasResp = await respostasService.listByPergunta(pergunta.id);
-                const primeira = respostasResp.data?.[0];
-                if (primeira?.texto) respostaTexto = primeira.texto;
-              }
-            } catch (resErr) {
-              console.warn("Erro ao buscar resposta", resErr);
-            }
-
-            const local = checkpointMap.get(pergunta.checkpoint_id) ?? `Checkpoint ${pergunta.checkpoint_id}`;
-
-            return {
-              id: pergunta.id,
-              pergunta: pergunta.texto,
-              local,
-              resposta: respostaTexto,
-            };
-          }),
-        );
-
-        setPerguntas(perguntasComRespostas);
-      } catch (err) {
-        console.error(err);
-        setError("Não foi possível carregar as perguntas.");
+      if (!id) {
+        setError("Nenhum tour selecionado.");
         setIsNow(false);
-      } finally {
+        return;
+      }
+
+      const [hasTourNow, perguntasResp, checkpointResp] = await Promise.all([
+        tourService.getById(id),
+        perguntasService.listByTour(id),
+        checkpointService.listByTour(id),
+      ]);
+
+      setIsNow(hasTourNow);
+
+      const checkpointMap = new Map<number, ApiCheckpoint["tipo"]>();
+      (checkpointResp.data ?? []).forEach((cp) => {
+        if (cp.id != null) {
+          checkpointMap.set(cp.id, cp.tipo);
+        }
+      });
+
+      const perguntasComRespostas = await Promise.all(
+        (perguntasResp.data ?? []).map(async (pergunta) => {
+          let respostaTexto = "Sem resposta ainda.";
+          try {
+            if (pergunta.id != null) {
+              const respostasResp = await respostasService.listByPergunta(pergunta.id);
+              const primeira = respostasResp.data?.[0];
+              if (primeira?.texto) respostaTexto = primeira.texto;
+            }
+          } catch (resErr) {
+            console.warn("Erro ao buscar resposta", resErr);
+          }
+
+          const local = checkpointMap.get(pergunta.checkpoint_id) ?? `Checkpoint ${pergunta.checkpoint_id}`;
+
+          return {
+            id: pergunta.id,
+            pergunta: pergunta.texto,
+            local,
+            resposta: respostaTexto,
+          };
+        }),
+      );
+
+      setPerguntas(perguntasComRespostas);
+    } catch (err) {
+      console.error(err);
+      setError("Não foi possível carregar as perguntas.");
+      setIsNow(false);
+    } finally {
+      if (isRefresh) {
+        setRefreshing(false);
+      } else {
         setLoading(false);
       }
     }
-    fetchData();
   }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   //const tourAtual = getTourDoDia(filteredTours);
 
@@ -114,8 +125,15 @@ export default function MapScreen() {
       <Header />
 
       <ScrollView
-        style={{ width: "100%", marginTop: 150, gap: 16 }}
-        contentContainerStyle={{ flexDirection: "column", gap: 8, justifyContent: "center", alignItems: "center" }}
+        style={{ width: "100%" }}
+        contentContainerStyle={{
+          flexDirection: "column",
+          gap: 8,
+          justifyContent: "center",
+          alignItems: "center",
+          paddingTop: 150,
+          paddingBottom: 220, // evita que o conteúdo fique escondido atrás da navbar e do botão flutuante
+        }}
         showsVerticalScrollIndicator={false}
       >
         {loading ? (
@@ -136,7 +154,21 @@ export default function MapScreen() {
             </View>
 
 
-            <Text style={[styles.text]}>Perguntas Feitas</Text>
+            <View style={styles.perguntasHeader}>
+              <Text style={styles.text}>Perguntas Feitas</Text>
+              <Pressable
+                onPress={() => fetchData(true)}
+                disabled={loading || refreshing}
+                style={({ pressed }) => [
+                  styles.refreshButton,
+                  (pressed && !(loading || refreshing)) && styles.refreshButtonPressed,
+                  (loading || refreshing) && styles.refreshButtonDisabled,
+                ]}
+              >
+                <Ionicons name="refresh" size={16} color="#FFF" />
+                <Text style={styles.refreshButtonText}>{refreshing ? "Atualizando" : "Atualizar"}</Text>
+              </Pressable>
+            </View>
             <View style={{ width: '100%', justifyContent: "center", alignItems: "center", gap: 4, paddingTop: 15 }}>
               {perguntas.length === 0 ? (
                 <Text style={{ color: "#FFF" }}>Nenhuma pergunta registrada.</Text>
@@ -208,11 +240,34 @@ const styles = StyleSheet.create({
   },
   text: {
     fontSize: 16,
-    fontWeight: 700,
-    color: "#FFF",
-    textAlign: "left",
-    marginVertical: 6,
-    width: "85%",
-    marginTop: 15
+    fontWeight: "700",
+    color: "#FFF"
   },
+  perguntasHeader: {
+    width: "95%",
+    marginTop: 15,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  refreshButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: "#855EDE",
+    borderRadius: 18,
+  },
+  refreshButtonPressed: {
+    opacity: 0.85,
+  },
+  refreshButtonDisabled: {
+    opacity: 0.6,
+  },
+  refreshButtonText: {
+    color: "#FFF",
+    fontWeight: "600",
+    fontSize: 13,
+  }
 });
