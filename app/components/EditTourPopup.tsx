@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { StyleSheet, View, Text, Pressable, ScrollView, Alert } from "react-native";
-import Feather from "@expo/vector-icons/Feather";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import type { Tour } from "@/app/(tabs)/index";
 import { FormInput } from "./FormInput";
@@ -12,7 +11,8 @@ import { tourService, visitanteService, tourVisitanteService, type Usuario } fro
 
 type Props = {
   onClose: () => void;
-  addTour: (tour: Tour) => void;
+  updateTour: (tour: Tour) => void;
+  tour: Tour;
 };
 
 // Mock de responsáveis enquanto não há rota de usuários
@@ -21,14 +21,14 @@ const mockUsuarios: Usuario[] = [
   { id: 2, nome: "Maria Souza", email: "maria@example.com" },
 ];
 
-export function AddTourPopup({ onClose, addTour }: Props) {
+export function EditTourPopup({ onClose, updateTour, tour }: Props) {
   const [form, setForm] = useState({
     roboId: "",
-    titulo: "",
+    titulo: tour?.titulo ?? "",
     data: new Date(),
-    horaInicioPrevista: "",
-    horaFimPrevista: "",
-    status: "scheduled",
+    horaInicioPrevista: tour?.hora_inicio_prevista ?? "",
+    horaFimPrevista: tour?.hora_fim_prevista ?? "",
+    status: (tour?.status as Tour["status"]) ?? "scheduled",
     nomeVisitante: "",
     emailVisitante: "",
     perfilvisitante: "",
@@ -46,32 +46,124 @@ export function AddTourPopup({ onClose, addTour }: Props) {
   const [showResponsavelList, setShowResponsavelList] = useState(false);
   const [loadingUsuarios, setLoadingUsuarios] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoadingData, setIsLoadingData] = useState(false);
+  const [initialForm, setInitialForm] = useState<typeof form | null>(null);
+  const [hasChanges, setHasChanges] = useState(false);
+  const [visitanteId, setVisitanteId] = useState<number | null>(null);
+
+  function parseDate(value: string | Date | null | undefined) {
+    if (!value) return new Date();
+    if (value instanceof Date) return value;
+    // suporta formatos "dd/mm/yyyy" e "yyyy-mm-dd"
+    if (value.includes("/")) {
+      const [day, month, year] = value.split("/");
+      return new Date(parseInt(year, 10), parseInt(month, 10) - 1, parseInt(day, 10));
+    }
+    const [year, month, day] = value.split("-"); // "2025-11-17"
+    return new Date(parseInt(year, 10), parseInt(month, 10) - 1, parseInt(day, 10));
+  }
+
+  function formatHora(value: string | null) {
+    if (!value) return "";
+    const [h, m] = value.split(":");
+    return `${h?.padStart(2, "0") ?? ""}:${m?.split(".")[0]?.padStart(2, "0") ?? ""}`;
+  }
+
+  // Preencher o formulário com os dados reais do tour e visitante
+  useEffect(() => {
+    async function hydrateData() {
+      if (!tour?.id) {
+        // Sem id, usamos os dados que já vieram no card
+        const baseForm = {
+          roboId: tour?.robo_id ? String(tour.robo_id) : "",
+          titulo: tour?.titulo ?? "",
+          data: parseDate(tour?.data),
+          horaInicioPrevista: tour?.hora_inicio_prevista ?? "",
+          horaFimPrevista: tour?.hora_fim_prevista ?? "",
+          status: tour?.status ?? "scheduled",
+          nomeVisitante: "",
+          emailVisitante: "",
+          perfilvisitante: "",
+          estado: "",
+          cpf: "",
+          telefone: "",
+          cidade: "",
+          acompanhante: false,
+          nomeAcompanhante: "",
+          cpfAcompanhante: "",
+        };
+        setForm(baseForm);
+        setInitialForm(baseForm);
+        return;
+      }
+
+      setIsLoadingData(true);
+      try {
+        const [tourResp, visitRelResp] = await Promise.all([
+          tourService.getById(tour.id),
+          tourVisitanteService.listByTour(tour.id),
+        ]);
+
+        const visitanteId = visitRelResp.data[0]?.visitante_id;
+        const visitanteResp = visitanteId ? await visitanteService.getById(visitanteId) : null;
+        if (visitanteId) setVisitanteId(visitanteId);
+
+        const baseForm = {
+          roboId: tourResp.data.robo_id?.toString() ?? "",
+          titulo: tourResp.data.titulo ?? "",
+          data: parseDate(tourResp.data.data_local ?? tour.data),
+          horaInicioPrevista: formatHora(tourResp.data.hora_inicio_prevista) || "",
+          horaFimPrevista: formatHora(tourResp.data.hora_fim_prevista) || "",
+          status: tourResp.data.status ?? "scheduled",
+          nomeVisitante: visitanteResp?.data.nome ?? "",
+          emailVisitante: visitanteResp?.data.email ?? "",
+          perfilvisitante: "",
+          estado: "",
+          cpf: "",
+          telefone: visitanteResp?.data.telefone ?? "",
+          cidade: "",
+          acompanhante: false,
+          nomeAcompanhante: "",
+          cpfAcompanhante: "",
+        };
+
+        setForm(baseForm);
+        setInitialForm(baseForm);
+
+        const respId = tourResp.data.responsavel_id ?? tour.responsavel_id;
+        if (respId) {
+          setResponsavelSelecionado({ id: respId, nome: `Responsável #${respId}` });
+        } else {
+          const mockResp = mockUsuarios.find(u => u.nome === tour.responsavel);
+          if (mockResp) {
+            setResponsavelSelecionado({ id: mockResp.id as number, nome: mockResp.nome });
+          }
+        }
+      } catch (error) {
+        console.error("Erro ao carregar dados do tour para edição", error);
+        Alert.alert("Erro", "Não foi possível carregar os dados do tour.");
+      } finally {
+        setIsLoadingData(false);
+      }
+    }
+
+    hydrateData();
+  }, [tour]);
+
+  // Detecta alterações para habilitar/desabilitar o botão de salvar
+  useEffect(() => {
+    if (!initialForm) return;
+    const normalize = (value: any) => {
+      if (value instanceof Date) return value.toISOString();
+      return value ?? "";
+    };
+
+    const changed = Object.keys(initialForm).some(key => normalize((form as any)[key]) !== normalize((initialForm as any)[key]));
+    setHasChanges(changed);
+  }, [form, initialForm]);
 
   function updateField(field: string, value: any) {
     setForm((prev) => ({ ...prev, [field]: value }));
-  }
-
-  function generateCode() {
-    const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    const numbers = "0123456789";
-    const all = letters + numbers;
-
-    // Garante pelo menos uma letra e um número, depois preenche o restante e embaralha.
-    const base = [
-      letters[Math.floor(Math.random() * letters.length)],
-      numbers[Math.floor(Math.random() * numbers.length)],
-    ];
-    while (base.length < 6) {
-      base.push(all[Math.floor(Math.random() * all.length)]);
-    }
-
-    // Fisher–Yates simples para embaralhar
-    for (let i = base.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [base[i], base[j]] = [base[j], base[i]];
-    }
-
-    return base.join("");
   }
 
   useEffect(() => {
@@ -101,6 +193,11 @@ export function AddTourPopup({ onClose, addTour }: Props) {
   async function handleSubmit() {
     if (isSubmitting) return;
 
+    if (!tour?.id) {
+      Alert.alert("Erro", "Não foi possível identificar o tour para editar.");
+      return;
+    }
+
     if (!form.nomeVisitante || !form.emailVisitante || !form.telefone) {
       Alert.alert("Campos obrigatórios", "Preencha nome, email e telefone do visitante.");
       return;
@@ -111,59 +208,58 @@ export function AddTourPopup({ onClose, addTour }: Props) {
       return;
     }
 
-    if (!responsavelSelecionado) {
+    if (!responsavelSelecionado && !tour.responsavel_id) {
       Alert.alert("Responsável", "Selecione um responsável para o tour.");
       return;
     }
 
     setIsSubmitting(true);
-    const codigo = generateCode();
 
     try {
-      const visitanteResp = await visitanteService.create({
-        email: form.emailVisitante,
-        nome: form.nomeVisitante,
-        telefone: form.telefone,
-      });
+      if (visitanteId) {
+        await visitanteService.update(visitanteId, {
+          nome: form.nomeVisitante,
+          email: form.emailVisitante,
+          telefone: form.telefone,
+        });
+      }
 
-      const visitanteId = visitanteResp.data.id;
-      if (!visitanteId) throw new Error("ID do visitante não retornado");
-
-      const tourResp = await tourService.create({
-        codigo,
+      const payload = {
+        codigo: tour.codigo,
         data_local: toIsoDate(form.data),
         hora_inicio_prevista: timeWithSeconds(form.horaInicioPrevista),
         hora_fim_prevista: timeWithSeconds(form.horaFimPrevista),
-        responsavel_id: responsavelSelecionado.id,
-        robo_id: Number(form.roboId) || 1,
+        responsavel_id: responsavelSelecionado?.id ?? tour.responsavel_id ?? null,
+        robo_id: form.roboId ? Number(form.roboId) : tour.robo_id ?? 1,
         status: normalizeStatusInput(form.status),
-        titulo: form.titulo || "Tour",
+        titulo: form.titulo || tour.titulo || "Tour",
         inicio_real: null,
         fim_real: null,
-      });
-
-      const tourId = tourResp.data.id;
-      if (!tourId) throw new Error("ID do tour não retornado");
-
-      await tourVisitanteService.create({
-        tour_id: tourId,
-        visitante_id: visitanteId,
-      });
-
-      const newTour: Tour = {
-        codigo: tourResp.data.codigo ?? codigo,
-        responsavel: responsavelSelecionado?.nome ?? `Responsável #${tourResp.data.responsavel_id ?? ""}`,
-        status: normalizeStatusInput(tourResp.data.status),
-        data: form.data.toLocaleDateString("pt-BR"),
-        hora_inicio_prevista: tourResp.data.hora_inicio_prevista?.slice(0, 5) ?? form.horaInicioPrevista,
-        hora_fim_prevista: tourResp.data.hora_fim_prevista?.slice(0, 5) ?? form.horaFimPrevista,
       };
 
-      addTour(newTour);
+      const resp = await tourService.update(tour.id, payload as any);
+      const apiTour = resp.data;
+
+      const updatedTour: Tour = {
+        id: apiTour.id ?? tour.id,
+        codigo: apiTour.codigo ?? tour.codigo,
+        responsavel: responsavelSelecionado?.nome ?? `Responsável #${apiTour.responsavel_id ?? tour.responsavel_id ?? ""}`,
+        responsavel_id: apiTour.responsavel_id ?? tour.responsavel_id,
+        status: normalizeStatusInput(apiTour.status),
+        data: form.data.toLocaleDateString("pt-BR"),
+        hora_inicio_prevista: formatHora(apiTour.hora_inicio_prevista) || form.horaInicioPrevista,
+        hora_fim_prevista: formatHora(apiTour.hora_fim_prevista) || form.horaFimPrevista,
+        titulo: apiTour.titulo ?? tour.titulo,
+        robo_id: apiTour.robo_id ?? tour.robo_id,
+      };
+
+      updateTour(updatedTour);
+      setInitialForm(form);
+      setHasChanges(false);
       onClose();
     } catch (error) {
       console.error(error);
-      Alert.alert("Erro", "Não foi possível cadastrar o tour.");
+      Alert.alert("Erro", "Não foi possível atualizar o tour.");
     } finally {
       setIsSubmitting(false);
     }
@@ -190,18 +286,12 @@ export function AddTourPopup({ onClose, addTour }: Props) {
 
   return (
     <View style={styles.overlay}>
-      <View style={styles.add_tour_popup}>
+      <View style={styles.edit_tour_popup}>
         <View style={styles.topo}>
-          <Text style={styles.title}>Cadastrar novo tour</Text>
-          <View style={styles.botoes}>
-            <Pressable onPress={handleSubmit}>
-              <Feather name="check-circle" size={20} color="#9747FF" />
-            </Pressable>
-
-            <Pressable onPress={onClose}>
-              <MaterialIcons name="close" size={20} color="black" />
-            </Pressable>
-          </View>
+          <Text style={styles.title}>Editar tour</Text>
+          <Pressable onPress={onClose}>
+            <MaterialIcons name="close" size={20} color="black" />
+          </Pressable>
         </View>
 
         <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
@@ -298,6 +388,22 @@ export function AddTourPopup({ onClose, addTour }: Props) {
             onChangeCompanionName={(text) => updateField("nomeAcompanhante", text)}
             onChangeCompanionCpf={(text) => updateField("cpfAcompanhante", text)}
           />
+
+          {/* Botão de Editar */}
+          <View style={styles.buttonContainer}>
+            <Pressable 
+              style={[
+                styles.editButton,
+                (!hasChanges || isSubmitting || isLoadingData) && styles.editButtonDisabled
+              ]} 
+              onPress={handleSubmit}
+              disabled={!hasChanges || isSubmitting || isLoadingData}
+            >
+              <Text style={styles.editButtonText}>
+                {isSubmitting ? "Salvando..." : isLoadingData ? "Carregando..." : "Editar tour"}
+              </Text>
+            </Pressable>
+          </View>
         </ScrollView>
       </View>
     </View>
@@ -310,20 +416,20 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    height: "100%",
+    bottom: 0,
     justifyContent: "flex-start",
     alignItems: "center",
     backgroundColor: "rgba(0, 0, 0, 0.3)",
+    zIndex: 1000,
   },
-  add_tour_popup: {
+  edit_tour_popup: {
     width: "90%",
     borderRadius: 20,
     backgroundColor: "white",
     marginTop: 60,
-    elevation: 6,
+    elevation: 10,
     padding: 16,
-    zIndex: 2,
-    maxHeight: "95%",
+    zIndex: 1001,
   },
   title: {
     fontSize: 16,
@@ -334,13 +440,7 @@ const styles = StyleSheet.create({
     display: "flex",
     flexDirection: "row",
     justifyContent: "space-between",
-  },
-  botoes: {
-    display: "flex",
-    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-around",
-    width: "20%",
   },
   bloco_input: {
     flexDirection: "row",
@@ -386,5 +486,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderBottomWidth: 1,
     borderBottomColor: "#EEE",
+  },
+  buttonContainer: {
+    marginTop: 20,
+    alignItems: "center",
+  },
+  editButton: {
+    backgroundColor: "#9747FF",
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 40,
+    minWidth: 200,
+    alignItems: "center",
+  },
+  editButtonDisabled: {
+    backgroundColor: "#D0B3FF",
+  },
+  editButtonText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "600",
   },
 });

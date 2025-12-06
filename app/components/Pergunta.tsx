@@ -15,7 +15,7 @@ export function Pergunta({ pergunta, local, resposta }: Props) {
         <Pressable style={styles.container} onPress={() => setShowPergunta(!showPergunta)}>
             <View style={styles.pergunta}>
                 <MaterialCommunityIcons name="message-text" size={24} color="#FFF" />
-                <Text style={{ maxWidth: 170, color: "#fff" }}>{pergunta}</Text>
+                <Text style={{ flex: 1, color: "#fff", flexWrap: "wrap" }}>{pergunta}</Text>
                 <Text style={{ fontSize: 12, backgroundColor: "#5C3DA9", padding: 4, justifyContent: "center", color: "#FFF", borderRadius: 4 }}>
                     <Feather name="map-pin" size={12} color="#FFF" />
                     {local}
