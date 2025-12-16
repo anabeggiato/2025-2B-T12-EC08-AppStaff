@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Axios instance shared by all services
 const api = axios.create({
-  baseURL: 'http://10.140.0.11:8080/v1',
+  baseURL: 'http://10.140.0.11:8000/v1',
   headers: {
     'Content-Type': 'application/json',
   },
