@@ -7,10 +7,12 @@ import {
 } from "react-native";
 import { Feather, Octicons, AntDesign } from "@expo/vector-icons";
 import { useRouter, usePathname } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   const isActive = (route: string) => pathname === route;
 
@@ -20,7 +22,14 @@ export function Navbar() {
   };
 
   return (
-    <View style={styles.navbar}>
+    <View
+      style={[
+        styles.navbar,
+        {
+          bottom: Math.max(insets.bottom + 10, 16),
+        },
+      ]}
+    >
       <Pressable onPress={() => handlePress("/")}>
         <View style={[styles.item, isActive("/") && styles.itemActive]}>
           <Octicons name="workflow" size={22} color="#FFF" />
@@ -51,11 +60,10 @@ const styles = StyleSheet.create({
   navbar: {
     flexDirection: "row",
     justifyContent: "space-between",
-    backgroundColor: "rgba(92, 61, 169, 0.6)",
+    backgroundColor: "rgba(92, 61, 169, 0.9)",
     borderRadius: 50,
     width: "95%",
     position: "absolute",
-    bottom: 20,
     alignSelf: "center",
     padding: 12,
   },
