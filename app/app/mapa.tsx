@@ -5,24 +5,15 @@ import {
   UIManager,
   Text,
   ScrollView,
-  Pressable,
   SafeAreaView,
 } from "react-native";
 import { Navbar } from "@/components/navbar";
 import { Header } from "@/components/header";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Pergunta } from "@/components/Pergunta";
 import Checkpoint from "@/components/Checkpoint";
-import {
-  tourService,
-  perguntasService,
-  respostasService,
-  checkpointService,
-  type Checkpoint as ApiCheckpoint,
-} from "@/services/api";
 import { AlertButton } from "@/components/AlertButton";
 import AlertPopup from "@/components/AlertPopup";
-import { Ionicons } from "@expo/vector-icons";
 
 if (
   Platform.OS === "android" &&
@@ -40,7 +31,25 @@ export type Tour = {
   hora_fim_prevista: string;
 };
 
+type WsPergunta = {
+  id_pergunta?: number;
+  texto_pergunta?: string;
+  checkpoint?: number;
+  texto_resposta?: string | null;
+};
+
+type WsMessage = {
+  status?: string;
+  tour_id?: number;
+  codigo?: string;
+  perguntas?: WsPergunta[];
+};
+
+const WS_URL = "ws://10.140.0.11:8080/v1/ws/tour/check";
+
 export default function MapScreen() {
+  const socketRef = useRef<WebSocket | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [isNow, setIsNow] = useState(false);
   const [tourId, setTourId] = useState<number | null>(null);
   const [perguntas, setPerguntas] = useState<
@@ -52,91 +61,116 @@ export default function MapScreen() {
     }[]
   >([]);
   const [loading, setLoading] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [alert, setAlert] = useState(false);
 
-  const fetchData = useCallback(async (isRefresh = false) => {
-    if (isRefresh) {
-      setRefreshing(true);
-    } else {
-      setLoading(true);
+  const buildPayload = () => {
+    const now = new Date();
+    const horario_verificacao = now.toLocaleTimeString("pt-BR", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    });
+    const data_local = now.toISOString().split("T")[0];
+    return { data_local, horario_verificacao };
+  };
+
+  const sendCurrentPayload = () => {
+    const ws = socketRef.current;
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+    const payload = buildPayload();
+    ws.send(JSON.stringify(payload));
+  };
+
+  const handleWsMessage = (raw: string) => {
+    try {
+      const parsed: WsMessage = JSON.parse(raw);
+      if (parsed.status === "active") {
+        setIsNow(true);
+        setTourId(parsed.tour_id ?? null);
+        const perguntasMapeadas =
+          parsed.perguntas?.map((p) => ({
+            id: p.id_pergunta,
+            pergunta: p.texto_pergunta ?? "",
+            local: p.checkpoint ? `Checkpoint ${p.checkpoint}` : "Checkpoint",
+            resposta: p.texto_resposta ?? "Sem resposta ainda.",
+          })) ?? [];
+        setPerguntas(perguntasMapeadas);
+        setError(null);
+      } else if (parsed.status === "inactive") {
+        setIsNow(false);
+        setTourId(null);
+        setPerguntas([]);
+        setError(null);
+      } else {
+        setError("Resposta inesperada do servidor.");
+        setIsNow(false);
+        setTourId(null);
+        setPerguntas([]);
+      }
+    } catch (err) {
+      console.warn("Erro ao parsear mensagem WS", err);
+      setError("Não foi possível interpretar a resposta do servidor.");
+      setIsNow(false);
+      setTourId(null);
+      setPerguntas([]);
     }
+  };
+
+  const connectAndSend = () => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+
+    setLoading(true);
     setError(null);
 
     try {
-      const mockId = await tourService.tourMock();
-      const id =
-        typeof mockId === "number" ? mockId : (mockId as any)?.data ?? null;
-      setTourId(id);
-
-      if (!id) {
-        setError("Nenhum tour selecionado.");
-        setIsNow(false);
-        return;
+      // Fecha conexão anterior, se houver
+      if (socketRef.current) {
+        socketRef.current.close();
       }
 
-      const [hasTourNow, perguntasResp, checkpointResp] = await Promise.all([
-        tourService.getById(id),
-        perguntasService.listByTour(id),
-        checkpointService.listByTour(id),
-      ]);
+      const ws = new WebSocket(WS_URL);
+      socketRef.current = ws;
 
-      // Verifica se há um tour ativo agora
-      setIsNow(!!hasTourNow?.data);
+      ws.onopen = () => {
+        sendCurrentPayload();
+        intervalRef.current = setInterval(() => {
+          sendCurrentPayload();
+        }, 5000);
+      };
 
-      const checkpointMap = new Map<number, ApiCheckpoint["tipo"]>();
-      (checkpointResp.data ?? []).forEach((cp) => {
-        if (cp.id != null) {
-          checkpointMap.set(cp.id, cp.tipo);
-        }
-      });
+      ws.onmessage = (event) => {
+        handleWsMessage(event.data);
+      };
 
-      const perguntasComRespostas = await Promise.all(
-        (perguntasResp.data ?? []).map(async (pergunta) => {
-          let respostaTexto = "Sem resposta ainda.";
-          try {
-            if (pergunta.id != null) {
-              const respostasResp = await respostasService.listByPergunta(
-                pergunta.id
-              );
-              const primeira = respostasResp.data?.[0];
-              if (primeira?.texto) respostaTexto = primeira.texto;
-            }
-          } catch (resErr) {
-            console.warn("Erro ao buscar resposta", resErr);
-          }
+      ws.onerror = () => {
+        setError("Falha na conexão WebSocket.");
+      };
 
-          const local =
-            checkpointMap.get(pergunta.checkpoint_id) ??
-            `Checkpoint ${pergunta.checkpoint_id}`;
-
-          return {
-            id: pergunta.id,
-            pergunta: pergunta.texto,
-            local,
-            resposta: respostaTexto,
-          };
-        })
-      );
-
-      setPerguntas(perguntasComRespostas);
+      ws.onclose = () => {
+        // noop
+      };
     } catch (err) {
       console.error(err);
-      setError("Não foi possível carregar as perguntas.");
-      setIsNow(false);
-    } finally {
-      if (isRefresh) {
-        setRefreshing(false);
-      } else {
-        setLoading(false);
-      }
+      setError("Não foi possível conectar ao WebSocket.");
     }
-  }, []);
+    setLoading(false);
+  };
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    connectAndSend();
+    return () => {
+      socketRef.current?.close();
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, []);
 
   //const tourAtual = getTourDoDia(filteredTours);
 
@@ -181,22 +215,6 @@ export default function MapScreen() {
 
             <View style={styles.perguntasHeader}>
               <Text style={styles.text}>Perguntas Feitas</Text>
-              <Pressable
-                onPress={() => fetchData(true)}
-                disabled={loading || refreshing}
-                style={({ pressed }) => [
-                  styles.refreshButton,
-                  pressed &&
-                    !(loading || refreshing) &&
-                    styles.refreshButtonPressed,
-                  (loading || refreshing) && styles.refreshButtonDisabled,
-                ]}
-              >
-                <Ionicons name="refresh" size={16} color="#FFF" />
-                <Text style={styles.refreshButtonText}>
-                  {refreshing ? "Atualizando" : "Atualizar"}
-                </Text>
-              </Pressable>
             </View>
             <View
               style={{
@@ -279,26 +297,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-  },
-  refreshButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    backgroundColor: "#855EDE",
-    borderRadius: 18,
-  },
-  refreshButtonPressed: {
-    opacity: 0.85,
-  },
-  refreshButtonDisabled: {
-    opacity: 0.6,
-  },
-  refreshButtonText: {
-    color: "#FFF",
-    fontWeight: "600",
-    fontSize: 13,
   },
   checkpointsContainer: {
     marginVertical: 20,

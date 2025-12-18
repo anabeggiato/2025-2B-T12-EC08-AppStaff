@@ -42,12 +42,7 @@ export function Navbar() {
         </View>
       </Pressable>
 
-      <Pressable onPress={() => handlePress("/ws-test")}>
-        <View style={[styles.item, isActive("/ws-test") && styles.itemActive]}>
-          <AntDesign name="api" size={22} color="#FFF" />
-          {isActive("/ws-test") && <Text style={styles.text}>WS Test</Text>}
-        </View>
-      </Pressable>
+      {/* Rota WS Test removida */}
     </View>
   );
 }
