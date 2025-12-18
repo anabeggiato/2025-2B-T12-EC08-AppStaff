@@ -1,7 +1,16 @@
-import { View, StyleSheet, Platform, UIManager, Text, ScrollView, Pressable } from "react-native"
+import {
+  View,
+  StyleSheet,
+  Platform,
+  UIManager,
+  Text,
+  ScrollView,
+  Pressable,
+  SafeAreaView,
+} from "react-native";
 import { Navbar } from "@/components/navbar";
 import { Header } from "@/components/header";
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback } from "react";
 import { Pergunta } from "@/components/Pergunta";
 import Checkpoint from "@/components/Checkpoint";
 import {
@@ -15,8 +24,10 @@ import { AlertButton } from "@/components/AlertButton";
 import AlertPopup from "@/components/AlertPopup";
 import { Ionicons } from "@expo/vector-icons";
 
-
-if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
+if (
+  Platform.OS === "android" &&
+  UIManager.setLayoutAnimationEnabledExperimental
+) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
@@ -29,13 +40,16 @@ export type Tour = {
   hora_fim_prevista: string;
 };
 
-
 export default function MapScreen() {
-
   const [isNow, setIsNow] = useState(false);
   const [tourId, setTourId] = useState<number | null>(null);
   const [perguntas, setPerguntas] = useState<
-    { id: number | undefined; pergunta: string; local: string; resposta: string }[]
+    {
+      id: number | undefined;
+      pergunta: string;
+      local: string;
+      resposta: string;
+    }[]
   >([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -52,7 +66,8 @@ export default function MapScreen() {
 
     try {
       const mockId = await tourService.tourMock();
-      const id = typeof mockId === "number" ? mockId : (mockId as any)?.data ?? null;
+      const id =
+        typeof mockId === "number" ? mockId : (mockId as any)?.data ?? null;
       setTourId(id);
 
       if (!id) {
@@ -67,7 +82,8 @@ export default function MapScreen() {
         checkpointService.listByTour(id),
       ]);
 
-      setIsNow(hasTourNow);
+      // Verifica se há um tour ativo agora
+      setIsNow(!!hasTourNow?.data);
 
       const checkpointMap = new Map<number, ApiCheckpoint["tipo"]>();
       (checkpointResp.data ?? []).forEach((cp) => {
@@ -81,7 +97,9 @@ export default function MapScreen() {
           let respostaTexto = "Sem resposta ainda.";
           try {
             if (pergunta.id != null) {
-              const respostasResp = await respostasService.listByPergunta(pergunta.id);
+              const respostasResp = await respostasService.listByPergunta(
+                pergunta.id
+              );
               const primeira = respostasResp.data?.[0];
               if (primeira?.texto) respostaTexto = primeira.texto;
             }
@@ -89,7 +107,9 @@ export default function MapScreen() {
             console.warn("Erro ao buscar resposta", resErr);
           }
 
-          const local = checkpointMap.get(pergunta.checkpoint_id) ?? `Checkpoint ${pergunta.checkpoint_id}`;
+          const local =
+            checkpointMap.get(pergunta.checkpoint_id) ??
+            `Checkpoint ${pergunta.checkpoint_id}`;
 
           return {
             id: pergunta.id,
@@ -97,7 +117,7 @@ export default function MapScreen() {
             local,
             resposta: respostaTexto,
           };
-        }),
+        })
       );
 
       setPerguntas(perguntasComRespostas);
@@ -121,38 +141,43 @@ export default function MapScreen() {
   //const tourAtual = getTourDoDia(filteredTours);
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <Header />
 
       <ScrollView
         style={{ width: "100%" }}
         contentContainerStyle={{
           flexDirection: "column",
-          gap: 8,
+          gap: 12,
           justifyContent: "center",
           alignItems: "center",
-          paddingTop: 150,
-          paddingBottom: 220, // evita que o conteúdo fique escondido atrás da navbar e do botão flutuante
+          paddingTop: 120,
+          paddingBottom: 140,
         }}
         showsVerticalScrollIndicator={false}
+        scrollIndicatorInsets={{ right: 1 }}
       >
         {loading ? (
-          <Text style={{ color: "#FFF" }}>Carregando...</Text>
+          <Text style={{ color: "#FFF", fontSize: 16 }}>Carregando...</Text>
         ) : error ? (
           <View style={styles.status_atual}>
             <Text style={{ color: "#FFF" }}>{error}</Text>
           </View>
         ) : isNow ? (
-          <View style={{ width: '100%', alignItems: 'center', justifyContent: 'center' }}>
-
-            <View style={{ marginVertical: 25, width: "95%", alignItems: 'center', flexDirection: "row", gap: 50, justifyContent: "center" }}>
+          <View
+            style={{
+              width: "100%",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <View style={styles.checkpointsContainer}>
               <Checkpoint id={1} status={"done"} label={"recepção"} />
               <Checkpoint id={2} status={"in_progress"} label={"auditório"} />
               <Checkpoint id={3} status={"not_started"} label={"ateliê"} />
               <Checkpoint id={4} status={"not_started"} label={"casinhas"} />
               <Checkpoint id={5} status={"not_started"} label={"dog house"} />
             </View>
-
 
             <View style={styles.perguntasHeader}>
               <Text style={styles.text}>Perguntas Feitas</Text>
@@ -161,17 +186,31 @@ export default function MapScreen() {
                 disabled={loading || refreshing}
                 style={({ pressed }) => [
                   styles.refreshButton,
-                  (pressed && !(loading || refreshing)) && styles.refreshButtonPressed,
+                  pressed &&
+                    !(loading || refreshing) &&
+                    styles.refreshButtonPressed,
                   (loading || refreshing) && styles.refreshButtonDisabled,
                 ]}
               >
                 <Ionicons name="refresh" size={16} color="#FFF" />
-                <Text style={styles.refreshButtonText}>{refreshing ? "Atualizando" : "Atualizar"}</Text>
+                <Text style={styles.refreshButtonText}>
+                  {refreshing ? "Atualizando" : "Atualizar"}
+                </Text>
               </Pressable>
             </View>
-            <View style={{ width: '100%', justifyContent: "center", alignItems: "center", gap: 4, paddingTop: 15 }}>
+            <View
+              style={{
+                width: "100%",
+                justifyContent: "center",
+                alignItems: "center",
+                gap: 4,
+                paddingTop: 15,
+              }}
+            >
               {perguntas.length === 0 ? (
-                <Text style={{ color: "#FFF" }}>Nenhuma pergunta registrada.</Text>
+                <Text style={{ color: "#FFF" }}>
+                  Nenhuma pergunta registrada.
+                </Text>
               ) : (
                 perguntas.map((p) => (
                   <Pergunta
@@ -193,27 +232,18 @@ export default function MapScreen() {
         )}
       </ScrollView>
 
-      {alert && (
-        <AlertPopup
-          onClose={() => setAlert(false)}
-          tourId={tourId}
-        />
-      )}
+      {alert && <AlertPopup onClose={() => setAlert(false)} tourId={tourId} />}
 
-      {isNow && (
-        <AlertButton onOpen={() => setAlert(true)} />
-      )}
+      {isNow && <AlertButton onOpen={() => setAlert(true)} />}
       <Navbar />
-    </View>
+    </SafeAreaView>
   );
 }
-
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#201A2C",
-    paddingTop: 64,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -227,7 +257,7 @@ const styles = StyleSheet.create({
     paddingVertical: 9,
     paddingHorizontal: 18,
     maxHeight: 40,
-    gap: 4
+    gap: 4,
   },
 
   status_atual: {
@@ -236,12 +266,12 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingVertical: 18,
     alignItems: "center",
-    marginVertical: 12
+    marginVertical: 12,
   },
   text: {
     fontSize: 16,
     fontWeight: "700",
-    color: "#FFF"
+    color: "#FFF",
   },
   perguntasHeader: {
     width: "95%",
@@ -269,5 +299,14 @@ const styles = StyleSheet.create({
     color: "#FFF",
     fontWeight: "600",
     fontSize: 13,
-  }
+  },
+  checkpointsContainer: {
+    marginVertical: 20,
+    width: "95%",
+    alignItems: "center",
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 24,
+    justifyContent: "center",
+  },
 });
