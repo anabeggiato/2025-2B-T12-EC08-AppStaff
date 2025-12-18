@@ -1,11 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { View, Text, StyleSheet, Pressable, ScrollView } from "react-native";
 
-const WS_URL = "ws://10.140.0.11:8000/v1/ws/tour/check";
+const WS_URL = "ws://10.140.0.11:8080/v1/ws/tour/check";
 
 const PAYLOAD = {
-  data_local: "2024-12-16",
-  horario_verificacao: "14:30:00",
+  data_local: "2025-12-18",
 };
 
 type WsResponse = {
@@ -22,21 +21,51 @@ type WsResponse = {
 
 export default function WsTestScreen() {
   const socketRef = useRef<WebSocket | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [status, setStatus] = useState("Desconectado");
   const [message, setMessage] = useState<WsResponse | null>(null);
   const [rawMessage, setRawMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [lastPayload, setLastPayload] = useState<string | null>(null);
 
   useEffect(() => {
     return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
       socketRef.current?.close();
     };
   }, []);
+
+  const buildPayload = () => {
+    const now = new Date();
+    const horario_verificacao = now.toLocaleTimeString("pt-BR", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    });
+    return {
+      ...PAYLOAD,
+      horario_verificacao,
+    };
+  };
+
+  const sendPayload = () => {
+    const socket = socketRef.current;
+    if (!socket || socket.readyState !== WebSocket.OPEN) return;
+    const payload = buildPayload();
+    const payloadText = JSON.stringify(payload);
+    socket.send(payloadText);
+    setLastPayload(payloadText);
+  };
 
   const connectAndSend = () => {
     setError(null);
     setMessage(null);
     setRawMessage(null);
+    setLastPayload(null);
 
     try {
       const ws = new WebSocket(WS_URL);
@@ -45,7 +74,10 @@ export default function WsTestScreen() {
 
       ws.onopen = () => {
         setStatus("Conectado, enviando payload...");
-        ws.send(JSON.stringify(PAYLOAD));
+        sendPayload();
+        intervalRef.current = setInterval(() => {
+          sendPayload();
+        }, 30000);
       };
 
       ws.onmessage = (event) => {
@@ -66,6 +98,10 @@ export default function WsTestScreen() {
 
       ws.onclose = () => {
         setStatus("Desconectado");
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
       };
     } catch (err) {
       setStatus("Erro");
@@ -83,8 +119,8 @@ export default function WsTestScreen() {
         <Text style={styles.buttonText}>Conectar e enviar payload</Text>
       </Pressable>
 
-      <Text style={styles.label}>Payload enviado</Text>
-      <Text style={styles.code}>{JSON.stringify(PAYLOAD, null, 2)}</Text>
+      <Text style={styles.label}>Payload enviado (ultimo)</Text>
+      <Text style={styles.code}>{lastPayload ?? "Nenhum envio ainda."}</Text>
 
       <Text style={styles.label}>Status</Text>
       <Text style={styles.status}>{status}</Text>
