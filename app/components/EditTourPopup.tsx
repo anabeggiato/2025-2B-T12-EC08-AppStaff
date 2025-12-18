@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { StyleSheet, View, Text, Pressable, ScrollView, Alert } from "react-native";
+import { Picker } from "@react-native-picker/picker";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import type { Tour } from "@/app/(tabs)/index";
 import { FormInput } from "./FormInput";
@@ -31,7 +32,7 @@ export function EditTourPopup({ onClose, updateTour, tour }: Props) {
     status: (tour?.status as Tour["status"]) ?? "scheduled",
     nomeVisitante: "",
     emailVisitante: "",
-    perfilvisitante: "",
+    perfilvisitante: "student",
     estado: "",
     cpf: "",
     telefone: "",
@@ -83,7 +84,7 @@ export function EditTourPopup({ onClose, updateTour, tour }: Props) {
           status: tour?.status ?? "scheduled",
           nomeVisitante: "",
           emailVisitante: "",
-          perfilvisitante: "",
+          perfilvisitante: "student",
           estado: "",
           cpf: "",
           telefone: "",
@@ -117,11 +118,11 @@ export function EditTourPopup({ onClose, updateTour, tour }: Props) {
           status: tourResp.data.status ?? "scheduled",
           nomeVisitante: visitanteResp?.data.nome ?? "",
           emailVisitante: visitanteResp?.data.email ?? "",
-          perfilvisitante: "",
-          estado: "",
-          cpf: "",
+          perfilvisitante: visitanteResp?.data.perfil ?? "student",
+          estado: visitanteResp?.data.estado ?? "",
+          cpf: visitanteResp?.data.cpf ?? "",
           telefone: visitanteResp?.data.telefone ?? "",
-          cidade: "",
+          cidade: visitanteResp?.data.cidade ?? "",
           acompanhante: false,
           nomeAcompanhante: "",
           cpfAcompanhante: "",
@@ -218,9 +219,13 @@ export function EditTourPopup({ onClose, updateTour, tour }: Props) {
     try {
       if (visitanteId) {
         await visitanteService.update(visitanteId, {
-          nome: form.nomeVisitante,
-          email: form.emailVisitante,
-          telefone: form.telefone,
+          nome: form.nomeVisitante || null,
+          email: form.emailVisitante || null,
+          telefone: form.telefone || null,
+          perfil: (form.perfilvisitante as "student" | "executive") || "student",
+          estado: form.estado || null,
+          cidade: form.cidade || null,
+          cpf: form.cpf || null,
         });
       }
 
@@ -364,12 +369,18 @@ export function EditTourPopup({ onClose, updateTour, tour }: Props) {
               width="95%"
             />
 
-            <FormInput
-              label="Perfil"
-              value={form.perfilvisitante}
-              onChangeText={(text) => updateField("perfilvisitante", text)}
-              width="95%"
-            />
+            <View style={[styles.input_section, { width: "95%" }]}>
+              <Text style={styles.label}>Perfil</Text>
+              <View style={styles.pickerContainer}>
+                <Picker
+                  selectedValue={form.perfilvisitante}
+                  onValueChange={(value) => updateField("perfilvisitante", value)}
+                >
+                  <Picker.Item label="Estudante" value="student" />
+                  <Picker.Item label="Executivo" value="executive" />
+                </Picker>
+              </View>
+            </View>
 
             <FormInput label="CPF" value={form.cpf} onChangeText={(text) => updateField("cpf", text)} width="48%" />
 
@@ -459,6 +470,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 8,
     marginBottom: 12,
+  },
+  pickerContainer: {
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: "#E5E5E5",
+    borderRadius: 12,
+    backgroundColor: "#F8F8F8",
   },
   label: {
     color: "rgba(19, 26, 41, 0.48)",

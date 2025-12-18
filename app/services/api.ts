@@ -2,11 +2,23 @@ import axios from 'axios';
 
 // Axios instance shared by all services
 const api = axios.create({
-  baseURL: 'http://10.140.0.11:8000/v1',
+  baseURL: 'http://10.140.0.11:8080/v1',
   headers: {
     'Content-Type': 'application/json',
   },
 });
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const method = error?.config?.method?.toUpperCase?.() ?? 'UNKNOWN';
+    const url = error?.config?.url ?? 'UNKNOWN_URL';
+    const status = error?.response?.status ?? 'NO_STATUS';
+    const data = error?.response?.data ?? null;
+    console.error(`[API] ${method} ${url} -> ${status}`, data);
+    return Promise.reject(error);
+  },
+);
 
 // Shared response envelope
 export interface ApiResponse<T> {
@@ -15,12 +27,12 @@ export interface ApiResponse<T> {
 }
 
 // --- Alertas ---
-export type AlertaNivel = 'Baixo' | 'medio' | 'Alto';
-export type AlertaOrigem =  'visitor' | 'robot' | 'manager' | null;
+export type AlertaNivel = 'baixo' | 'medio' | 'alto';
+export type AlertaOrigem = string | null;
 
 export interface Alerta {
   id?: number;
-  tour_id: number;
+  tour_id: number | null;
   origem: AlertaOrigem;
   nivel: AlertaNivel;
   mensagem: string | null;
@@ -52,8 +64,39 @@ export const alertasService = {
   },
 };
 
+// --- Acompanhante ---
+export interface Acompanhante {
+  id?: number;
+  cpf: string | null;
+  nome: string | null;
+  visitante_id: number | null;
+}
+
+export const acompanhanteService = {
+  list: async () => {
+    const response = await api.get<ApiResponse<Acompanhante[]>>('/acompanhante');
+    return response.data;
+  },
+  create: async (data: Omit<Acompanhante, 'id'>) => {
+    const response = await api.post<ApiResponse<Acompanhante>>('/acompanhante', data);
+    return response.data;
+  },
+  getById: async (id: number) => {
+    const response = await api.get<ApiResponse<Acompanhante>>(`/acompanhante/${id}`);
+    return response.data;
+  },
+  update: async (id: number, data: Omit<Acompanhante, 'id'>) => {
+    const response = await api.put<ApiResponse<Acompanhante>>(`/acompanhante/${id}`, data);
+    return response.data;
+  },
+  remove: async (id: number) => {
+    const response = await api.delete<ApiResponse<{ message: string }>>(`/acompanhante/${id}`);
+    return response.data;
+  },
+};
+
 // --- Checkpoints ---
-export type CheckpointStatus = 'pending' | 'running' | 'finished';
+export type CheckpointStatus = 'pending' | 'running' | 'finished' | 'skipped';
 export type CheckpointTipo = 'recepcao' | 'auditorio' | 'atelie' | 'casinhas' | 'dog_house';
 
 export interface Checkpoint {
@@ -94,13 +137,21 @@ export const checkpointService = {
   },
 };
 
+// --- Modelo ---
+export const modeloService = {
+  processQuestion: async (data: Omit<Pergunta, 'id' | 'criado_em'>) => {
+    const response = await api.post<ApiResponse<Resposta>>('/modelo', data);
+    return response.data;
+  },
+};
+
 // --- Notificacoes ---
 export interface Notificacao {
   id?: number;
   usuario_id: number | null;
-  titulo: string;
+  titulo: string | null;
   corpo: string | null;
-  payload_json: Record<string, unknown> | null;
+  payload_json: string | null;
   lido: boolean;
   criado_em?: string;
 }
@@ -245,10 +296,10 @@ export const rastreioRoboService = {
 // --- Robo ---
 export interface Robo {
   id?: number;
-  nome: string;
+  nome: string | null;
   modelo: string | null;
   numero_serie: string | null;
-  ativo: boolean;
+  ativo: boolean | null;
   criado_em?: string;
 }
 
@@ -276,7 +327,7 @@ export const roboService = {
 };
 
 // --- Tour ---
-export type TourStatus = 'scheduled' | 'in_progress' | 'paused' | 'finished';
+export type TourStatus = 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
 
 export interface Tour {
   id?: number;
@@ -290,7 +341,7 @@ export interface Tour {
   status: TourStatus;
   robo_id: number;
   responsavel_id: number | null;
-  criado_por: number;
+  criado_por?: number;
   criado_em?: string;
 }
 
@@ -405,6 +456,10 @@ export interface Visitante {
   id?: number;
   nome: string | null;
   email: string | null;
+  perfil: 'student' | 'executive';
+  estado: string | null;
+  cidade: string | null;
+  cpf: string | null;
   telefone: string | null;
   criado_em?: string;
 }
