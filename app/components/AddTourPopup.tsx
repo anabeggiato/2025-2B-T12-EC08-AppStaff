@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { StyleSheet, View, Text, Pressable, ScrollView, Alert } from "react-native";
+import { StyleSheet, View, Text, Pressable, ScrollView, Alert, KeyboardAvoidingView, Platform } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import Feather from "@expo/vector-icons/Feather";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
@@ -207,23 +207,30 @@ export function AddTourPopup({ onClose, addTour }: Props) {
 
   return (
     <View style={styles.overlay}>
-      <View style={styles.add_tour_popup}>
-        <View style={styles.topo}>
-          <Text style={styles.title}>Cadastrar novo tour</Text>
-          <View style={styles.botoes}>
-            <Pressable onPress={handleSubmit}>
-              <Feather name="check-circle" size={20} color="#9747FF" />
-            </Pressable>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.keyboardAvoid}
+      >
+        <View style={styles.add_tour_popup}>
+          <View style={styles.topo}>
+            <Text style={styles.title}>Cadastrar novo tour</Text>
+            <View style={styles.botoes}>
+              <Pressable onPress={handleSubmit}>
+                <Feather name="check-circle" size={20} color="#9747FF" />
+              </Pressable>
 
-            <Pressable onPress={onClose}>
-              <MaterialIcons name="close" size={20} color="black" />
-            </Pressable>
+              <Pressable onPress={onClose}>
+                <MaterialIcons name="close" size={20} color="black" />
+              </Pressable>
+            </View>
           </View>
-        </View>
 
-        <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
-          {/* Informações gerais */}
-          <View style={styles.bloco_input}>
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+          >
+            {/* Informações gerais */}
+            <View style={styles.bloco_input}>
             <View style={[styles.input_section, { width: "95%" }]}>
               <Text style={styles.label}>Staff responsável</Text>
               <Pressable onPress={() => setShowResponsavelList((prev) => !prev)} style={styles.selectBox}>
@@ -321,8 +328,9 @@ export function AddTourPopup({ onClose, addTour }: Props) {
             onChangeCompanionName={(text) => updateField("nomeAcompanhante", text)}
             onChangeCompanionCpf={(text) => updateField("cpfAcompanhante", text)}
           />
-        </ScrollView>
-      </View>
+          </ScrollView>
+        </View>
+      </KeyboardAvoidingView>
     </View>
   );
 }
@@ -338,6 +346,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "rgba(0, 0, 0, 0.3)",
   },
+  keyboardAvoid: {
+    width: "100%",
+    alignItems: "center",
+  },
   add_tour_popup: {
     width: "90%",
     borderRadius: 20,
@@ -347,6 +359,9 @@ const styles = StyleSheet.create({
     padding: 16,
     zIndex: 2,
     maxHeight: "95%",
+  },
+  scrollContent: {
+    paddingBottom: 20,
   },
   title: {
     fontSize: 16,
