@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { StyleSheet, View, Text, Pressable, ScrollView, Alert, Modal } from "react-native";
+import { StyleSheet, View, Text, Pressable, ScrollView, Alert, Modal, KeyboardAvoidingView, Platform } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import type { Tour } from "@/app/(tabs)/index";
@@ -9,6 +9,7 @@ import { TimePickerField } from "./TimePickerField";
 import { StatePickerField } from "./StatePickerField";
 import { CompanionSection } from "./CompanionSection";
 import { tourService, visitanteService, tourVisitanteService, type Usuario } from "@/services/api";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type Props = {
   onClose: () => void;
@@ -23,6 +24,7 @@ const mockUsuarios: Usuario[] = [
 ];
 
 export function EditTourPopup({ onClose, updateTour, tour }: Props) {
+  const insets = useSafeAreaInsets();
   const [form, setForm] = useState({
     roboId: "",
     titulo: tour?.titulo ?? "",
@@ -297,15 +299,22 @@ export function EditTourPopup({ onClose, updateTour, tour }: Props) {
       onRequestClose={onClose}
     >
     <View style={styles.overlay}>
-      <View style={styles.edit_tour_popup}>
-        <View style={styles.topo}>
-          <Text style={styles.title}>Editar tour</Text>
-          <Pressable onPress={onClose}>
-            <MaterialIcons name="close" size={20} color="black" />
-          </Pressable>
-        </View>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.keyboardAvoid}
+      >
+        <View style={styles.edit_tour_popup}>
+          <View style={styles.topo}>
+            <Text style={styles.title}>Editar tour</Text>
+            <Pressable onPress={onClose}>
+              <MaterialIcons name="close" size={20} color="black" />
+            </Pressable>
+          </View>
 
-        <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
+          <ScrollView
+            contentContainerStyle={{ paddingBottom: 32 }}
+            keyboardShouldPersistTaps="handled"
+          >
           {/* Informações gerais */}
           <View style={styles.bloco_input}>
             <View style={[styles.input_section, { width: "95%" }]}>
@@ -406,23 +415,24 @@ export function EditTourPopup({ onClose, updateTour, tour }: Props) {
             onChangeCompanionCpf={(text) => updateField("cpfAcompanhante", text)}
           />
 
-          {/* Botão de Editar */}
-          <View style={styles.buttonContainer}>
-            <Pressable 
-              style={[
-                styles.editButton,
-                (!hasChanges || isSubmitting || isLoadingData) && styles.editButtonDisabled
-              ]} 
-              onPress={handleSubmit}
-              disabled={!hasChanges || isSubmitting || isLoadingData}
-            >
-              <Text style={styles.editButtonText}>
-                {isSubmitting ? "Salvando..." : isLoadingData ? "Carregando..." : "Editar tour"}
-              </Text>
-            </Pressable>
-          </View>
-        </ScrollView>
-      </View>
+            {/* Botão de Editar */}
+            <View style={[styles.buttonContainer, { marginBottom: Math.max(insets.bottom, 12) }]}>
+              <Pressable
+                style={[
+                  styles.editButton,
+                  (!hasChanges || isSubmitting || isLoadingData) && styles.editButtonDisabled,
+                ]}
+                onPress={handleSubmit}
+                disabled={!hasChanges || isSubmitting || isLoadingData}
+              >
+                <Text style={styles.editButtonText}>
+                  {isSubmitting ? "Salvando..." : isLoadingData ? "Carregando..." : "Editar tour"}
+                </Text>
+              </Pressable>
+            </View>
+          </ScrollView>
+        </View>
+      </KeyboardAvoidingView>
     </View>
     </Modal>
   );
@@ -438,7 +448,11 @@ const styles = StyleSheet.create({
     justifyContent: "flex-start",
     alignItems: "center",
     backgroundColor: "rgba(0, 0, 0, 0.3)",
-    zIndex: 1000,
+    zIndex: 2000,
+  },
+  keyboardAvoid: {
+    width: "100%",
+    alignItems: "center",
   },
   edit_tour_popup: {
     width: "90%",
@@ -447,7 +461,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
     elevation: 10,
     padding: 16,
-    zIndex: 1001,
+    zIndex: 2001,
   },
   title: {
     fontSize: 16,
