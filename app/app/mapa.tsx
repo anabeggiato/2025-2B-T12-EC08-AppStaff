@@ -5,8 +5,8 @@ import {
   UIManager,
   Text,
   ScrollView,
-  SafeAreaView,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Navbar } from "@/components/navbar";
 import { Header } from "@/components/header";
 import { useState, useEffect, useRef } from "react";
@@ -210,7 +210,7 @@ export default function MapScreen() {
               <Checkpoint id={2} status={"in_progress"} label={"auditório"} />
               <Checkpoint id={3} status={"not_started"} label={"ateliê"} />
               <Checkpoint id={4} status={"not_started"} label={"casinhas"} />
-              <Checkpoint id={5} status={"not_started"} label={"dog house"} />
+              <Checkpoint id={5} status={"not_started"} label={"LIA house"} />
             </View>
 
             <View style={styles.perguntasHeader}>
@@ -303,8 +303,7 @@ const styles = StyleSheet.create({
     width: "95%",
     alignItems: "center",
     flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 24,
-    justifyContent: "center",
+    flexWrap: "nowrap",
+    justifyContent: "space-between",
   },
 });

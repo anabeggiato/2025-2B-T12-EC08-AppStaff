@@ -214,15 +214,9 @@ export function AddTourPopup({ onClose, addTour }: Props) {
         <View style={styles.add_tour_popup}>
           <View style={styles.topo}>
             <Text style={styles.title}>Cadastrar novo tour</Text>
-            <View style={styles.botoes}>
-              <Pressable onPress={handleSubmit}>
-                <Feather name="check-circle" size={20} color="#9747FF" />
-              </Pressable>
-
-              <Pressable onPress={onClose}>
-                <MaterialIcons name="close" size={20} color="black" />
-              </Pressable>
-            </View>
+            <Pressable onPress={onClose}>
+              <MaterialIcons name="close" size={20} color="black" />
+            </Pressable>
           </View>
 
           <ScrollView
@@ -328,6 +322,20 @@ export function AddTourPopup({ onClose, addTour }: Props) {
             onChangeCompanionName={(text) => updateField("nomeAcompanhante", text)}
             onChangeCompanionCpf={(text) => updateField("cpfAcompanhante", text)}
           />
+          <View style={styles.buttonContainer}>
+            <Pressable
+              style={[
+                styles.submitButton,
+                isSubmitting && styles.submitButtonDisabled,
+              ]}
+              onPress={handleSubmit}
+              disabled={isSubmitting}
+            >
+              <Text style={styles.submitButtonText}>
+                {isSubmitting ? "Salvando..." : "Criar tour"}
+              </Text>
+            </Pressable>
+          </View>
           </ScrollView>
         </View>
       </KeyboardAvoidingView>
@@ -345,6 +353,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-start",
     alignItems: "center",
     backgroundColor: "rgba(0, 0, 0, 0.3)",
+    zIndex: 2000,
   },
   keyboardAvoid: {
     width: "100%",
@@ -357,7 +366,7 @@ const styles = StyleSheet.create({
     marginTop: 60,
     elevation: 6,
     padding: 16,
-    zIndex: 2,
+    zIndex: 2001,
     maxHeight: "95%",
   },
   scrollContent: {
@@ -372,13 +381,6 @@ const styles = StyleSheet.create({
     display: "flex",
     flexDirection: "row",
     justifyContent: "space-between",
-  },
-  botoes: {
-    display: "flex",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-around",
-    width: "20%",
   },
   bloco_input: {
     flexDirection: "row",
@@ -431,5 +433,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderBottomWidth: 1,
     borderBottomColor: "#EEE",
+  },
+  buttonContainer: {
+    marginTop: 12,
+    alignItems: "center",
+  },
+  submitButton: {
+    backgroundColor: "#9747FF",
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    minWidth: 220,
+    alignItems: "center",
+  },
+  submitButtonDisabled: {
+    opacity: 0.7,
+  },
+  submitButtonText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "600",
   },
 });
