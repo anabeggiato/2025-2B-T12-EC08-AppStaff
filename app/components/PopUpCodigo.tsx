@@ -103,7 +103,7 @@ const styles = StyleSheet.create({
   },
 
   codeText: {
-    fontSize: 96,
+    fontSize: 64,
     fontWeight: "bold",
     color: "#855EDE",
     fontFamily:"Arial",
