@@ -45,7 +45,7 @@ type WsMessage = {
   perguntas?: WsPergunta[];
 };
 
-const WS_URL = "ws://0.0.0.0:8080/v1/ws/tour/check";
+const WS_URL = "ws://10.140.0.11:8080/v1/ws/tour/check";
 
 export default function MapScreen() {
   const socketRef = useRef<WebSocket | null>(null);
