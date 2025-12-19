@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { StyleSheet, View, Text, Pressable, ScrollView, Alert } from "react-native";
+import { StyleSheet, View, Text, Pressable, ScrollView, Alert, Modal } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import type { Tour } from "@/app/(tabs)/index";
@@ -290,6 +290,12 @@ export function EditTourPopup({ onClose, updateTour, tour }: Props) {
   };
 
   return (
+    <Modal
+      visible={true}
+      transparent={true}
+      animationType="fade"
+      onRequestClose={onClose}
+    >
     <View style={styles.overlay}>
       <View style={styles.edit_tour_popup}>
         <View style={styles.topo}>
@@ -418,6 +424,7 @@ export function EditTourPopup({ onClose, updateTour, tour }: Props) {
         </ScrollView>
       </View>
     </View>
+    </Modal>
   );
 }
 
@@ -437,7 +444,7 @@ const styles = StyleSheet.create({
     width: "90%",
     borderRadius: 20,
     backgroundColor: "white",
-    marginTop: 60,
+    marginTop: 20,
     elevation: 10,
     padding: 16,
     zIndex: 1001,
